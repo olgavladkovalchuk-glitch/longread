@@ -8,7 +8,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- React & ReactDOM (Cloudflare CDN for better reliability) -->
+    <!-- React & ReactDOM (Cloudflare CDN) -->
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     
@@ -115,32 +115,29 @@
     <div id="error-boundary"></div>
 
     <script>
+        // Global Error Handler
         window.onerror = function(msg, url, lineNo, columnNo, error) {
             var container = document.getElementById('error-boundary');
             if (container) {
                 container.style.display = 'block';
                 container.innerHTML += '<h3>CRITICAL ERROR</h3><p>' + msg + '</p><p>Line: ' + lineNo + '</p><hr/>';
             }
+            console.error("Global error:", msg, error);
             return false;
-        };
-        // Safety check for React
-        window.onload = function() {
-            if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
-                var container = document.getElementById('error-boundary');
-                container.style.display = 'block';
-                container.innerHTML += '<h3>DEPENDENCY ERROR</h3><p>React failed to load. Please check your internet connection.</p>';
-            }
         };
     </script>
 
-    <!-- Removed 'typescript' preset to avoid mobile parsing issues -->
+    <!-- Main Application Script -->
     <script type="text/babel" data-presets="react">
     
-    // --- SAFE GLOBAL SCOPE START ---
-    
+    // Safety check for React globals
+    if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+        throw new Error("React dependencies failed to load.");
+    }
+
     const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
-    /* CONSTANTS & DATA */
+    /* ================= TYPES (Converted to Consts) ================= */
     
     const GameStage = {
         Intro: 0,
@@ -172,6 +169,8 @@
         RemoteLogin: 'remote_login',
         ElenaFlipPhone: 'elena_phone_drafts',
     };
+
+    /* ================= CONSTANTS ================= */
 
     const TOTAL_TIME = 45 * 60; 
 
@@ -374,7 +373,7 @@
         ]}
     ];
 
-    /* COMPONENTS */
+    /* ================= COMPONENTS ================= */
 
     const Modal = ({ isOpen, onClose, title, children }) => {
         if (!isOpen) return null;
@@ -1001,7 +1000,7 @@
         );
     };
 
-    /* APP COMPONENT */
+    /* ================= MAIN APP COMPONENT ================= */
     
     const App = () => {
         const [isLoading, setIsLoading] = useState(true);
@@ -1234,7 +1233,7 @@
         );
     };
 
-    /* RENDER */
+    /* ================= INDEX ================= */
     const rootElement = document.getElementById('root');
     const root = ReactDOM.createRoot(rootElement);
     root.render(
