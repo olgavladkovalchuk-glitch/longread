@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Дело №13-82</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React & ReactDOM (Cloudflare CDN - UMD version for max compatibility) -->
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel (Standalone) -->
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+      :root {
+        --font-main: 'JetBrains Mono', monospace;
+        --font-header: 'Roboto', sans-serif;
+      }
+
+      body {
+        background-color: #101010;
+        font-family: var(--font-main);
+        color: #1a1a1a;
+        overflow-x: hidden;
+        margin: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .font-mono { font-family: var(--font-main) !important; }
+      .font-sans { font-family: var(--font-header) !important; }
+
+      h1, h2, h3, button {
+        font-family: var(--font-header);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .hotspot {
+        cursor: help;
+        border: 1px solid rgba(255, 0, 0, 0.0);
+        transition: border 0.2s;
+        touch-action: manipulation;
+      }
+      .hotspot:hover, .hotspot:active {
+         border: 1px solid rgba(255, 0, 0, 0.3);
+         background-color: rgba(255, 255, 0, 0.05);
+      }
+
+      body.clue-selected, body.clue-selected .hotspot {
+        cursor: copy;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      .paper-texture {
+         background-color: #f7f1e3;
+         background-image: linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);
+         background-size: 100% 24px;
+         box-shadow: 0 0 50px rgba(0,0,0,0.8);
+         border: 1px solid #d1ccc0;
+      }
+
+      .paper-bg {
+         background-color: #2c2c2c;
+         background-image: repeating-linear-gradient(45deg, #2b2b2b 25%, transparent 25%, transparent 75%, #2b2b2b 75%, #2b2b2b), repeating-linear-gradient(45deg, #2b2b2b 25%, #222 25%, #222 75%, #2b2b2b 75%, #2b2b2b);
+         background-position: 0 0, 10px 10px;
+         background-size: 20px 20px;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #e0d8c3; }
+      ::-webkit-scrollbar-thumb { background: #8b0000; }
+
+      /* Mobile friendly */
+      button { touch-action: manipulation; }
+
+      #error-boundary {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: #000; color: #ff0000;
+        z-index: 9999; padding: 20px;
+        white-space: pre-wrap; font-family: monospace;
+        overflow: auto;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+</head>
+  <body class="paper-bg">
+    <div id="root"></div>
+    <div id="error-boundary"></div>
+
+    <script>
+        // Global Error Handler
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            var container = document.getElementById('error-boundary');
+            if (container) {
+                container.style.display = 'block';
+                container.innerHTML += '<h3>CRITICAL ERROR</h3><p>' + msg + '</p><p>Line: ' + lineNo + '</p><hr/>';
+            }
+            console.error("Global error:", msg, error);
+            return false;
+        };
+    </script>
+
+    <!-- Main Application Script -->
+    <script type="text/babel" data-presets="react">
+
+    // Safety check for React globals
+    if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+        throw new Error("React dependencies failed to load.");
+    }
+
+    const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+    /* ================= TYPES (Converted to JS Objects) ================= */
+
+    const GameStage = {
+        Intro: 0,
+        Dossier: 1,
+        Search: 2,
+        Interrogation: 3,
+        Deduction: 4,
+        End: 5
+    };
+
+    const SuspectId = {
+        Grigory: 'grigory',
+        Elena: 'elena',
+        Mikhail: 'mikhail'
+    };
+
+    const ClueId = {
+        FloppyDisk: 'item_floppy',
+        FlashDrive: 'item_flash',
+        MinerRDP: 'miner_rdp',
+        PasswordSticker: 'password_sticker',
+        ThreateningSMS: 'threatening_sms',
+        PhishingLinks: 'phishing_links',
+        DebtLetter: 'debt_letter',
+        TrojanFlashDrive: 'trojan_flash_drive',
+        NotepadEntry: 'notepad_entry',
+        OldDatabase: 'old_database',
+        PrintedPasswords: 'printed_passwords',
+        RemoteLogin: 'remote_login',
+        ElenaFlipPhone: 'elena_phone_drafts',
+    };
+
+    /* ================= CONSTANTS ================= */
+
+    const TOTAL_TIME = 45 * 60;
+
+    const SUSPECTS = [
+        {
+            id: SuspectId.Grigory,
+            name: 'Григорий',
+            age: 28,
+            role: 'СИСАДМИН',
+            imageUrl: 'https://i.ibb.co/1tFFkF4v/photo-2025-12-24-18-06-50.jpg',
+            bio: 'Типичный обитатель серверной. Пахнет дешевым энергетиком и пылью. Взгляд бегающий, руки трясутся. Живет с мамой, боится женщин и солнечного света.',
+        },
+        {
+            id: SuspectId.Elena,
+            name: 'Елена',
+            age: 34,
+            role: 'МЕНЕДЖЕР',
+            imageUrl: 'https://i.ibb.co/b5fnDwGG/photo-2025-12-24-16-01-13.jpg',
+            bio: 'Хищница в офисном аквариуме. Дорогие духи не перебивают запах амбиций и долгов. Ради премии продаст родную бабушку, не то что базу данных.',
+        },
+        {
+            id: SuspectId.Mikhail,
+            name: 'Михаил',
+            age: 56,
+            role: 'ГЛАВБУХ',
+            imageUrl: 'https://i.ibb.co/DD1TYQN2/photo-2025-12-24-15-59-32.jpg',
+            bio: 'Реликт ушедшей эпохи. Считает, что компьютер — это происки дьявола, а лучший антивирус — иконка на мониторе. Единственный друг — кактус.',
+        }
+    ];
+
+    const DESKS = [
+        {
+            id: SuspectId.Grigory,
+            name: 'ЛОГОВО АДМИНА',
+            imageUrl: 'https://i.ibb.co/5WZLJvNH/photo-2026-01-03-20-18-31.jpg',
+            hotspots: [
+                { id: 'grigory_monitor', top: '10%', left: '20%', width: '35%', height: '35%', description: 'Macintosh Portable. Гудит как турбина.', interactions: {
+                    quick: { text: 'Взгляд на экран (0 мин)', time: 0, result: 'Сисадмин гоняет водопроводчика Марио. Работа стоит, пиксели идут.' },
+                    deep: { text: 'Влезть в систему (3 мин)', time: 180, result: 'В диспетчере задач висит процесс "Miner_x64". Наш "гений" майнит крипту на рабочем сервере. И открыл порты RDP для удаленки.', clue: ClueId.MinerRDP },
+                },
+                use: [{
+                    clueId: ClueId.FloppyDisk,
+                    time: 120,
+                    result: 'ВЫ ИСПОЛЬЗОВАЛИ ДИСКЕТУ. Скрипт прожевал логи. Вход по RDP был выполнен с IP 192.168.0.105 в 23:00. Кто-то зашел под админом извне.',
+                    newClue: ClueId.RemoteLogin
+                },
+                {
+                    clueId: ClueId.FlashDrive,
+                    time: 180,
+                    result: 'ВЫ ВСТАВИЛИ ФЛЕШКУ ЕЛЕНЫ. Экран моргнул красным. Антивирус орет благим матом. На флешке "Keylogger.StealAll". Этой штукой увели пароли.',
+                    newClue: ClueId.TrojanFlashDrive
+                }]},
+                { id: 'grigory_cup', top: '60%', left: '5%', width: '15%', height: '20%', description: 'Грязная кружка. Там уже зародилась жизнь.', interactions: {
+                    quick: { text: 'Понюхать (0 мин)', time: 0, result: 'Запах плесени и безысходности.' },
+                    deep: { text: 'Изучить дно (1 мин)', time: 60, result: 'УЛИКА: Под кружкой стикер: "GREG_SuperAdmin_1995". Гений кибербезопасности, черт возьми.', clue: ClueId.PasswordSticker },
+                }},
+                { id: 'grigory_phone', top: '75%', left: '78%', width: '12%', height: '15%', description: 'Nokia 3310. Оружие пролетариата.', interactions: {
+                    quick: { text: 'Включить (0 мин)', time: 0, result: 'Работает. Такие переживут ядерную войну.' },
+                    deep: { text: 'Входящие СМС (2 мин)', time: 120, result: 'УЛИКА: СМС от Елены: "Не дашь админку — сдам твою ферму шефу. Вылетишь по статье". Шантаж чистой воды.', clue: ClueId.ThreateningSMS },
+                }},
+                { id: 'grigory_floppy', top: '72%', left: '50%', width: '12%', height: '10%', description: 'Дискета 3.5". Надпись "ЛИЧНОЕ".', interactions: {
+                    quick: { text: 'Забрать дискету (1 мин)', time: 60, result: 'Вы сунули дискету в карман. Может, там порно, а может — логи сервера.', clue: ClueId.FloppyDisk },
+                    deep: { text: 'Осмотреть (2 мин)', time: 120, result: 'Пластик, магнитная лента. На вкус пробовать не стоит. Потраченное время.' },
+                }},
+                { id: 'grigory_photo', top: '18%', left: '60%', width: '12%', height: '15%', description: 'Фото в дешевой рамке.', interactions: {
+                    quick: { text: 'Глянуть (0 мин)', time: 0, result: 'Гриша и огромная рыба. Единственная женщина, которую он держал в руках.' },
+                    deep: { text: 'Разобрать рамку (2 мин)', time: 120, result: 'Ничего. Только пыль и рыбья чешуя. Вы зря потратили время.' },
+                }},
+                { id: 'grigory_vader', top: '5%', left: '85%', width: '10%', height: '20%', description: 'Дарт Вейдер. Пыльный лорд ситхов.', interactions: {
+                    quick: { text: 'Тыкнуть (0 мин)', time: 0, result: 'Вейдер осуждающе смотрит на ваш непрофессионализм.' },
+                    deep: { text: 'Вскрыть (3 мин)', time: 180, result: 'Внутри пусто. Вы сломали игрушку. Гриша будет плакать.', },
+                }},
+                 { id: 'grigory_notepad', top: '50%', left: '70%', width: '12%', height: '15%', description: 'Засаленный блокнот.', interactions: {
+                    quick: { text: 'Листать (1 мин)', time: 60, result: 'Рисунки эльфиек и схемы IP-адресов.' },
+                    deep: { text: 'Вчитаться (2 мин)', time: 120, result: 'Запись на полях: "Елена просила проверить флешку. Странная она. Антивирус на неё ругается".' },
+                }},
+            ]
+        },
+        {
+            id: SuspectId.Elena,
+            name: 'СТОЛ ЕЛЕНЫ',
+            imageUrl: 'https://i.ibb.co/5Xds48DS/photo-2026-01-03-20-19-42.jpg',
+            hotspots: [
+                { id: 'elena_monitor', top: '15%', left: '38%', width: '25%', height: '35%', description: 'Монитор. Сайт знакомств.', interactions: {
+                    quick: { text: 'Прочесть чат (1 мин)', time: 60, result: 'Ищет "спонсора для решения деликатных проблем". Цинично.' },
+                    deep: { text: 'История браузера (3 мин)', time: 180, result: 'УЛИКА: Сплошной фишинг. "Выиграй iPhone", "Быстрый займ", "Кредит без паспорта". Она кликает на всё подряд.', clue: ClueId.PhishingLinks },
+                }},
+                 { id: 'elena_phone', top: '60%', left: '5%', width: '10%', height: '20%', description: 'Розовая раскладушка. Липкая от лака.', interactions: {
+                    quick: { text: 'Осмотреть (0 мин)', time: 0, result: 'Гламурный мусор.' },
+                    deep: { text: 'Черновики (2 мин)', time: 120, result: 'УЛИКА: Неотправленное СМС Мише: "Старый пень, пароли у меня. Плати или солью базу конкурентам". Она играла по-крупному.', clue: ClueId.ElenaFlipPhone },
+                }},
+                { id: 'elena_letter', top: '60%', left: '75%', width: '15%', height: '15%', description: 'Клочки бумаги в корзине.', interactions: {
+                    quick: { text: 'Глянуть (0 мин)', time: 0, result: 'Кто-то в ярости порвал документ.' },
+                    deep: { text: 'Собрать пазл (4 мин)', time: 240, result: 'УЛИКА: Уведомление коллекторов. Долг 4.5 млн руб. "Срок погашения истек вчера. Готовьтесь к описи имущества". Вот он, мотив.', clue: ClueId.DebtLetter },
+                }},
+                { id: 'elena_flash', top: '75%', left: '90%', width: '8%', height: '8%', description: 'Флешка со стразами.', interactions: {
+                    quick: { text: 'Забрать (1 мин)', time: 60, result: 'Вы взяли флешку. Выглядит безобидно, но интуиция кричит об обратном.', clue: ClueId.FlashDrive },
+                    deep: { text: 'Рассмотреть (1 мин)', time: 120, result: 'Надпись "Для документов". Слишком банально.' },
+                }},
+                { id: 'elena_notepad', top: '30%', left: '80%', width: '15%', height: '25%', description: 'Ежедневник в коже.', interactions: {
+                    quick: { text: 'Читать (1 мин)', time: 60, result: 'Запись на 18:00: "Маникюр". На 19:00: "Конец света".' },
+                    deep: { text: 'Листать дальше (2 мин)', time: 120, result: 'УЛИКА: "План: 1. Выманить базу у Миши. 2. Скинуть через комп Гриши (пусть этого лоха уволят). 3. Продать базу и закрыть кредит".', clue: ClueId.NotepadEntry },
+                }},
+                 { id: 'elena_mirror', top: '45%', left: '15%', width: '10%', height: '15%', description: 'Зеркальце.', interactions: {
+                    quick: { text: 'Посмотреться (0 мин)', time: 0, result: 'Вы видите уставшее лицо человека, который ненавидит свою работу.' },
+                    deep: { text: 'Разбить (1 мин)', time: 60, result: 'Плохая примета. И минус минута жизни.', },
+                }},
+            ]
+        },
+        {
+            id: SuspectId.Mikhail,
+            name: 'СТОЛ МИХАИЛА',
+            imageUrl: 'https://i.ibb.co/g2Z68FL/photo-2026-01-03-20-20-45.jpg',
+            hotspots: [
+                { id: 'mikhail_monitor', top: '22%', left: '40%', width: '22%', height: '25%', description: 'Монитор-аквариум. Одноклассники.', interactions: {
+                    quick: { text: 'Фото (0 мин)', time: 0, result: 'Михаил обнимает березу. Душевно.' },
+                    deep: { text: 'Личные сообщения (3 мин)', time: 180, result: 'УЛИКА: Переписка с сыном. "Пап, скинь базу для диплома". Михаил: "Держи, сынок. Baza_2010.xls". Старый дурак слил архив, думая, что помогает.', clue: ClueId.OldDatabase },
+                }},
+                { id: 'mikhail_folder', top: '65%', left: '75%', width: '20%', height: '25%', description: 'Папка "ВАЖНОЕ".', interactions: {
+                    quick: { text: 'Открыть (1 мин)', time: 60, result: 'Скучная бухгалтерия.' },
+                    deep: { text: 'Перерыть бумаги (2 мин)', time: 120, result: 'УЛИКА: Распечатка: "Логин: Admin, Пароль: 123456". Пароли от клиент-банка и 1С лежат на самом видном месте.', clue: ClueId.PrintedPasswords },
+                }},
+                { id: 'mikhail_cactus', top: '35%', left: '72%', width: '12%', height: '20%', description: 'Кактус Валера.', interactions: {
+                    quick: { text: 'Поговорить (0 мин)', time: 0, result: 'Валера молчит. Он видел некоторое дерьмо, но не скажет.' },
+                    deep: { text: 'Копнуть землю (2 мин)', time: 120, result: 'Грязь под ногтями. Улик нет. Валера смеется над вами.' },
+                }},
+                 { id: 'mikhail_planner', top: '65%', left: '10%', width: '20%', height: '25%', description: 'Ежедневник пенсионера.', interactions: {
+                    quick: { text: 'Осмотреть (0 мин)', time: 0, result: 'Пахнет валидолом.' },
+                    deep: { text: 'Читать (2 мин)', time: 120, result: 'Список: "Купить хлеб, позвонить внуку, полить Валеру". Святая простота.' },
+                }},
+            ]
+        }
+    ];
+
+    const CLUE_DESCRIPTIONS = {
+        [ClueId.FloppyDisk]: { name: "Дискета с логами", desc: 'Забрана у сисадмина. Нужно вставить в терминал, чтобы прочесть логи входов.', isItem: true },
+        [ClueId.FlashDrive]: { name: "Подозрительная флешка", desc: 'Забрана у Елены. Слишком гламурная для рабочих файлов. Надо проверить.', isItem: true },
+
+        [ClueId.MinerRDP]: { name: "Майнер на сервере", desc: 'Гриша превратил серверную в майнинг-ферму. И открыл порты настежь.' },
+        [ClueId.PasswordSticker]: { name: "Пароль под кружкой", desc: 'Пароль супер-админа приклеен жвачкой к столу. Классика.' },
+        [ClueId.ThreateningSMS]: { name: "Шантаж Гриши", desc: 'Елена держит сисадмина за горло, угрожая сдать его ферму.' },
+        [ClueId.ElenaFlipPhone]: { name: "Черновик шантажа", desc: 'Елена планировала шантажировать и Михаила. Она в отчаянии.' },
+        [ClueId.PhishingLinks]: { name: "История браузера", desc: 'Елена кликает на все баннеры "ДЕНЬГИ ДАРОМ". Идеальная жертва фишинга.' },
+        [ClueId.DebtLetter]: { name: "Коллекторы", desc: 'Долг 4.5 млн. У Елены был мотив, средство и возможность.' },
+        [ClueId.TrojanFlashDrive]: { name: "Троян-кейлоггер", desc: 'На флешке софт для кражи паролей. Промышленный шпионаж.' },
+        [ClueId.NotepadEntry]: { name: "План Преступления", desc: 'Пошаговая инструкция, как подставить коллег и украсть базу.' },
+        [ClueId.OldDatabase]: { name: "Слив по глупости", desc: 'Михаил скинул сыну старую базу. Нарушение, но не катастрофа.' },
+        [ClueId.PrintedPasswords]: { name: "Дырявая безопасность", desc: 'Михаил хранит пароли на бумаге. Бери кто хочет.' },
+        [ClueId.RemoteLogin]: { name: "Взлом извне", desc: 'Данные ушли на левый IP. Вход выполнен с помощью украденных паролей.' },
+    };
+
+    const INTERROGATION_DIALOGUES = {
+        [SuspectId.Grigory]: [
+            { id: 'g1', question: 'Марио вместо работы? Серьезно?', answer: 'Код компилируется! Это святое время! Я не бездельничал!', conclusion: 'Григорий безответственен, но это не преступление.'},
+            { id: 'g2', question: 'Майнер на сервере. Тюрьма плачет.', requiresClue: ClueId.MinerRDP, answer: 'Я только тестировал! Нагрузку проверял! Не сажайте, у меня ипотека... то есть мама!', conclusion: 'Григорий майнил на работе и открыл порты. Это дыра в безопасности.'},
+            { id: 'g3', question: 'Пароль под кружкой. Ты идиот?', requiresClue: ClueId.PasswordSticker, answer: 'Там сложные символы! Я забываю! Кто ж знал, что кто-то будет рыться в моей грязной посуде?', conclusion: 'Григорий хранил пароль супер-админа в открытом доступе.'},
+            { id: 'g4', question: 'Елена тебя прижала?', requiresClue: ClueId.ThreateningSMS, answer: '(Шепотом) Эта ведьма узнала про ферму. Сказала: дай доступ, или сдам директору. Я дал... Я просто хотел, чтобы она отстала.', conclusion: 'Григорий дал Елене права админа под угрозой шантажа.'},
+        ],
+        [SuspectId.Elena]: [
+            { id: 'e1', question: 'Коллекторы уже звонят?', requiresClue: ClueId.DebtLetter, answer: 'Это... ошибка банка! Я подала апелляцию! У меня всё под контролем!', conclusion: 'У Елены огромные долги. Мотив - деньги.'},
+            { id: 'e2', question: 'Откуда на флешке троян?', requiresClue: ClueId.FlashDrive, answer: 'Какой троян? Это мне... друг подарил. Сказал, программа для ускорения интернета. Я не хакер, я жертва!', conclusion: 'Елена принесла кейлоггер, но прикидывается дурочкой. Или правда не знала?'},
+            { id: 'e3', question: 'План в блокноте. Чистосердечное?', requiresClue: ClueId.NotepadEntry, answer: 'Это черновик романа! Я пишу детектив! Вы не имеете права использовать мое творчество против меня!', conclusion: 'Елена расписала план кражи базы данных. Это улика.'},
+        ],
+        [SuspectId.Mikhail]: [
+            { id: 'm1', question: 'Валера много знает?', answer: 'Побольше вашего, молодой человек. Он умеет хранить молчание.', conclusion: 'Михаил странный, но кактус не свидетель.'},
+            { id: 'm2', question: 'Зачем базу сыну слил?', requiresClue: ClueId.OldDatabase, answer: 'Диплом у парня! "Анализ данных 2010 года". Это ж старье, макулатура! Я же не враг себе.', conclusion: 'Михаил слил старую базу, но не актуальную.'},
+            { id: 'm3', question: 'Пароли на столе. Удобно?', requiresClue: ClueId.PrintedPasswords, answer: 'У меня склероз! А ваши айтишники требуют менять их каждые две недели. Gd7#k9... Тьфу! Бумага — она все стерпит.', conclusion: 'Михаил скомпрометировал свои пароли по халатности.'},
+        ]
+    };
+
+    const SECURITY_RULES = [
+        { title: 'Доступ и пароли', points: [
+            'Использовать сложные и уникальные пароли для каждого корпоративного сервиса.',
+            'Не применять рабочие пароли в личных сервисах.',
+            'Не передавать пароли коллегам и третьим лицам.',
+            'Не хранить пароли на стикерах, на мониторе или в файлах на рабочем столе.',
+            'Включать двухфакторную аутентификацию.'
+        ]},
+        { title: 'Рабочие станции и офисное пространство', points: [
+            'Всегда блокировать компьютер при отходе от рабочего места.',
+            'Не устанавливать ПО без согласования с ИТ.',
+            'Не отключать антивирус и другие средства защиты.',
+            'Соблюдать политику «чистого стола»: не оставлять документы и флешки на виду.',
+        ]},
+        { title: 'Почта, мессенджеры и интернет', points: [
+            'Использовать для рабочих задач только корпоративные ресурсы.',
+            'Не пересылать служебные документы на личную почту.',
+            'Не открывать вложения и ссылки из подозрительных писем.',
+            'Внимательно проверять адрес отправителя (фишинг).',
+        ]},
+        { title: 'Съемные носители и оборудование', points: [
+            'Не использовать личные флешки на рабочих компьютерах.',
+            'Не подключать найденные или неизвестные USB-устройства.',
+            'Использовать только корпоративные, зашифрованные носители.',
+        ]},
+        { title: 'Работа с конфиденциальной информацией', points: [
+            'Доступ к данным предоставляется по принципу «минимально необходимого доступа».',
+            'Не обсуждать конфиденциальные данные в общественных местах.',
+            'Уничтожать печатные документы с важной информацией через шредер.',
+        ]}
+    ];
+
+    /* ================= COMPONENTS ================= */
+
+    const Modal = ({ isOpen, onClose, title, children }) => {
+        if (!isOpen) return null;
+
+        return (
+            <div
+                className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4"
+                onClick={onClose}
+            >
+                <div
+                    className="bg-[#DCC9A9] text-[#333] p-6 rounded-lg shadow-xl w-full max-w-lg relative border-4 border-[#4E6851]"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex justify-between items-center border-b-2 border-gray-500/50 pb-3 mb-4">
+                        <h3 className="text-lg font-bold font-mono">{title}</h3>
+                        <button onClick={onClose} className="text-2xl font-bold hover:text-[#B83A2D] transition-transform transform active:scale-90">&times;</button>
+                    </div>
+                    <div className="overflow-y-auto max-h-[60vh]">
+                        {children}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const LoadingScreen = () => {
+        return (
+            <div className="min-h-screen bg-[#f7f1e3] flex items-center justify-center p-4">
+                <div className="max-w-2xl w-full border-4 border-[#333] p-8 bg-white shadow-2xl relative">
+                    <div className="absolute top-4 right-4 border-4 border-[#8b0000] text-[#8b0000] px-4 py-1 font-bold font-mono text-xl rotate-[-15deg] opacity-80 mix-blend-multiply">
+                        СОВ. СЕКРЕТНО
+                    </div>
+
+                    <div className="text-center space-y-6">
+                        <h1 className="text-4xl font-bold font-mono tracking-widest text-[#1a1a1a] mb-8">
+                            ДЕЛО №13-82
+                        </h1>
+
+                        <div className="flex justify-center my-8">
+                            <div className="w-16 h-16 border-t-4 border-[#8b0000] rounded-full animate-spin"></div>
+                        </div>
+
+                        <div className="font-mono text-lg space-y-2 text-left border-t-2 border-dashed border-gray-400 pt-6">
+                            <p className="animate-pulse">> Запрос архивных данных...</p>
+                            <p className="delay-75">> Подготовка досье сотрудников...</p>
+                            <p className="delay-150">> Восстановление хронологии...</p>
+                        </div>
+
+                        <p className="text-sm text-gray-500 font-mono mt-8 pt-4">
+                            Пожалуйста, подождите. Идет выдача материалов следствия.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const IntroSection = ({ onStart }) => {
+        const [rulesModalOpen, setRulesModalOpen] = useState(false);
+        const [briefingModalOpen, setBriefingModalOpen] = useState(false);
+
+        return (
+            <section id="intro">
+                <h2 className="text-2xl font-black mb-6 border-b-4 border-black pb-2">ВВОДНАЯ ИНФОРМАЦИЯ</h2>
+                <div className="bg-[#e6dfcc] p-6 border-2 border-dashed border-[#8b0000] shadow-inner space-y-4 text-lg">
+                    <p>
+                        <span className="font-bold bg-black text-white px-1">ДАТА:</span> Пятница, 18:45. <br/>
+                        <span className="font-bold bg-black text-white px-1">МЕСТО:</span> Офис ООО «Вектор-Н».
+                    </p>
+                    <p>
+                        В кабинете директора пахнет корвалолом и дорогим коньяком. <span className="font-bold text-[#8b0000]">Утечка базы данных (5000 паспортов).</span> Даркнет уже торгует сканами.
+                    </p>
+                    <p>
+                        У вас <span className="font-bold underline decoration-red-500 decoration-4">45 МИНУТ</span> до приезда маски-шоу. Найдите крысу, или мы все пойдем под суд.
+                        Обыщите столы, соберите улики, расколите подозреваемых.
+                    </p>
+                    <p className="italic text-sm mt-4 text-gray-600">
+                        *Примечание: Не тыкайте во все подряд. Время — это роскошь, которой у вас нет.*
+                    </p>
+                </div>
+                <div className="flex flex-col gap-4 mt-8">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <button onClick={() => setRulesModalOpen(true)} className="flex-1 border-4 border-[#333] text-[#333] py-3 px-4 font-bold hover:bg-[#333] hover:text-white transition-all text-lg uppercase tracking-widest">
+                            Протоколы ИБ
+                        </button>
+                        <button onClick={() => setBriefingModalOpen(true)} className="flex-1 border-4 border-[#4E6851] text-[#4E6851] py-3 px-4 font-bold hover:bg-[#4E6851] hover:text-white transition-all text-lg uppercase tracking-widest animate-pulse">
+                            ИНСТРУКТАЖ (ВАЖНО!)
+                        </button>
+                    </div>
+                    <button onClick={onStart} className="w-full bg-[#8b0000] text-white border-4 border-[#8b0000] py-4 px-6 font-bold hover:bg-red-700 transition-all text-xl uppercase tracking-widest shadow-lg transform hover:-translate-y-1">
+                        НАЧАТЬ РАССЛЕДОВАНИЕ
+                    </button>
+                </div>
+
+                <Modal isOpen={rulesModalOpen} onClose={() => setRulesModalOpen(false)} title="СЕКРЕТНО: ПРОТОКОЛЫ">
+                    <div className="space-y-6 text-base max-h-[60vh] overflow-y-auto pr-2 font-mono">
+                        {SECURITY_RULES.map(rule => (
+                            <div key={rule.title} className="border-b border-gray-400 pb-4">
+                                <h4 className="font-bold text-lg text-[#8b0000] mb-2">{rule.title}</h4>
+                                <ul className="list-square list-inside space-y-2">
+                                    {rule.points.map(point => <li key={point}>{point}</li>)}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+                </Modal>
+
+                <Modal isOpen={briefingModalOpen} onClose={() => setBriefingModalOpen(false)} title="МЕТОДИЧКА СЛЕДОВАТЕЛЯ">
+                    <div className="space-y-4 text-base font-mono">
+                        <div className="bg-white/50 p-3 border-l-4 border-[#B83A2D]">
+                            <h4 className="font-bold">1. СБОР УЛИК</h4>
+                            <p>На столах есть предметы. Некоторые просто дают информацию, другие (помечены как <span className="font-bold text-red-600">КРАСНЫЕ</span> в меню действий) можно забрать.</p>
+                        </div>
+                        <div className="bg-white/50 p-3 border-l-4 border-[#4E6851]">
+                            <h4 className="font-bold">2. ИСПОЛЬЗОВАНИЕ ПРЕДМЕТОВ</h4>
+                            <p>Найденные предметы попадают в <span className="font-bold">ИНВЕНТАРЬ</span>. Чтобы использовать предмет:</p>
+                            <ol className="list-decimal list-inside ml-2 mt-1">
+                                <li>Откройте Инвентарь.</li>
+                                <li>Нажмите на предмет (он выделится).</li>
+                                <li>Нажмите на объект на столе, к которому хотите применить предмет (например, флешку -> к компьютеру).</li>
+                            </ol>
+                        </div>
+                        <div className="bg-white/50 p-3 border-l-4 border-black">
+                            <h4 className="font-bold">3. ДОПРОС</h4>
+                            <p>Некоторые вопросы подозреваемым будут заблокированы, пока вы не найдете (или не примените) соответствующие улики.</p>
+                        </div>
+                        <button onClick={() => setBriefingModalOpen(false)} className="w-full mt-4 bg-[#333] text-white py-2 font-bold hover:bg-black">
+                            ВСЁ ЯСНО
+                        </button>
+                    </div>
+                </Modal>
+            </section>
+        );
+    };
+
+    const DossierSection = ({ onComplete }) => {
+        return (
+            <section id="dossier" className="animate-fade-in">
+                <h2 className="text-xl font-bold mb-4 font-mono">ДОСЬЕ ПОДОЗРЕВАЕМЫХ</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {SUSPECTS.map(suspect => (
+                        <div key={suspect.id} className="group bg-white/50 p-4 border border-gray-500/20 text-center flex flex-col h-full">
+                            <div className="w-full h-[400px] mb-4 border-2 border-black overflow-hidden bg-gray-200">
+                                <img
+                                    src={suspect.imageUrl}
+                                    alt={suspect.name}
+                                    className="w-full h-full object-cover object-top transition-transform duration-500 ease-in-out group-hover:scale-105"
+                                />
+                            </div>
+                            <h3 className="font-bold text-lg font-mono text-[#B83A2D]">{suspect.role.toUpperCase()}</h3>
+                            <p className="font-bold text-md">{suspect.name} ({suspect.age} лет)</p>
+                            <p className="text-sm mt-2 text-left flex-grow">{suspect.bio}</p>
+                        </div>
+                    ))}
+                </div>
+                <div className="text-center mt-8">
+                    <button onClick={onComplete} className="bg-[#333] text-white py-2 px-12 font-bold hover:bg-black transition-all duration-200 font-mono transform active:scale-95">
+                        &gt;&gt; НАЧАТЬ ОСМОТР
+                    </button>
+                </div>
+            </section>
+        );
+    };
+
+    const ClueInventory = ({ isOpen, onClose, foundClues, onSelectClue, selectedClue }) => {
+        const handleSelect = (clueId) => {
+            if (CLUE_DESCRIPTIONS[clueId].isItem) {
+                 onSelectClue(clueId);
+            }
+        }
+
+        return (
+            <Modal isOpen={isOpen} onClose={onClose} title="Инвентарь и Улики">
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                    {foundClues.length === 0 ? (
+                        <p className="text-gray-500">Пусто.</p>
+                    ) : (
+                        foundClues.map(clueId => {
+                            const isItem = CLUE_DESCRIPTIONS[clueId].isItem;
+                            return (
+                                <div
+                                    key={clueId}
+                                    onClick={() => handleSelect(clueId)}
+                                    className={`p-3 border-2 transition-all duration-200
+                                        ${isItem ? 'cursor-pointer hover:bg-yellow-100/20 border-yellow-600/50' : 'border-gray-500/30'}
+                                        ${selectedClue === clueId ? 'border-[#B83A2D] bg-red-100/50 ring-2 ring-red-500' : ''}
+                                    `}
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <h4 className={`font-bold ${isItem ? 'text-[#B83A2D]' : 'text-[#4E6851]'}`}>
+                                            {CLUE_DESCRIPTIONS[clueId].name}
+                                        </h4>
+                                        {isItem && <span className="text-xs bg-[#B83A2D] text-white px-2 py-0.5 rounded">ПРЕДМЕТ</span>}
+                                    </div>
+                                    <p className="text-sm">{CLUE_DESCRIPTIONS[clueId].desc}</p>
+                                    {isItem && selectedClue === clueId && (
+                                        <p className="text-xs text-[#B83A2D] mt-2 font-bold animate-pulse">>>> ВЫБРАНО: Примените на объект</p>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+                <p className="text-xs mt-4 text-center text-gray-600">
+                    Предметы (отмечены красным) можно выбирать и применять на объекты в офисе. Остальное — просто информация.
+                </p>
+            </Modal>
+        );
+    };
+
+    const DeskComponent = ({ desk, onClueFound, onInteraction, interactedHotspots, selectedClue, setSelectedClue }) => {
+        const [selectedHotspot, setSelectedHotspot] = useState(null);
+        const [interactionResult, setInteractionResult] = useState(null);
+        const [imageError, setImageError] = useState(false);
+
+        const handleHotspotClick = (hotspot) => {
+            if (selectedClue) {
+                const useInteraction = hotspot.use?.find(u => u.clueId === selectedClue);
+                if (useInteraction) {
+                    setInteractionResult(useInteraction.result);
+                    if (useInteraction.newClue) {
+                        onClueFound(useInteraction.newClue, useInteraction.time, hotspot.id + '_used');
+                    } else {
+                        onInteraction(useInteraction.time, hotspot.id + '_used');
+                    }
+                } else {
+                    setInteractionResult("Это не работает.");
+                }
+                setSelectedHotspot(hotspot);
+                setSelectedClue(null);
+                return;
+            }
+
+            if (interactedHotspots.has(hotspot.id)) {
+                setInteractionResult("Вы уже осмотрели этот предмет.");
+                setSelectedHotspot(hotspot);
+            } else {
+                setSelectedHotspot(hotspot);
+                setInteractionResult(null);
+            }
+        };
+
+        const handleInteractionChoice = (type) => {
+            if (!selectedHotspot) return;
+
+            const interaction = selectedHotspot.interactions[type];
+            setInteractionResult(interaction.result);
+
+            if ('clue' in interaction && interaction.clue) {
+                onClueFound(interaction.clue, interaction.time, selectedHotspot.id);
+            } else {
+                onInteraction(interaction.time, selectedHotspot.id);
+            }
+        };
+
+        const closeModal = () => {
+            setSelectedHotspot(null);
+            setInteractionResult(null);
+        };
+
+        return (
+            <div className="relative w-full max-w-4xl mx-auto border-4 border-[#333] bg-[#222]">
+                {!imageError ? (
+                    <img
+                        src={desk.imageUrl}
+                        alt={desk.name}
+                        className="w-full h-auto block"
+                        onError={() => setImageError(true)}
+                    />
+                ) : (
+                    <div className="w-full h-[300px] flex items-center justify-center bg-gray-300 text-gray-500 font-mono">
+                        <p className="text-center p-4">Изображение стола не загрузилось. Проверьте соединение. (Хотспоты доступны)</p>
+                    </div>
+                )}
+
+                <div className="absolute inset-0">
+                    {desk.hotspots.map(hotspot => (
+                        <div
+                            key={hotspot.id}
+                            className="absolute hotspot"
+                            style={{
+                                top: hotspot.top,
+                                left: hotspot.left,
+                                width: hotspot.width,
+                                height: hotspot.height,
+                            }}
+                            onClick={() => handleHotspotClick(hotspot)}
+                            title={hotspot.description}
+                        />
+                    ))}
+                </div>
+
+                <Modal isOpen={!!selectedHotspot} onClose={closeModal} title={selectedHotspot?.description || ''}>
+                    {selectedHotspot && (
+                        <div>
+                            {interactionResult ? (
+                                <div>
+                                    <p className="mb-4 p-4 bg-gray-200/50 border-l-4 border-[#4E6851]">{interactionResult}</p>
+                                    <button onClick={closeModal} className="w-full bg-[#333] text-white py-2 px-6 font-bold hover:bg-black transition-all duration-200 transform active:scale-95">Закрыть</button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-4">
+                                    <button onClick={() => handleInteractionChoice('quick')} className="w-full bg-[#4E6851] text-white py-2 px-6 font-bold hover:bg-[#3e5341] transition-all duration-200 transform active:scale-95">
+                                        {selectedHotspot.interactions.quick.text}
+                                    </button>
+                                    <button onClick={() => handleInteractionChoice('deep')} className="w-full bg-[#B83A2D] text-white py-2 px-6 font-bold hover:bg-[#9c3025] transition-all duration-200 transform active:scale-95">
+                                        {selectedHotspot.interactions.deep.text}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </Modal>
+            </div>
+        );
+    };
+
+    const SearchSection = ({ timeLeft, foundClues, foundCluesCount, onClueFound, onInteraction, interactedHotspots, onComplete }) => {
+        const [activeDesk, setActiveDesk] = useState(SuspectId.Grigory);
+        const [inventoryOpen, setInventoryOpen] = useState(false);
+        const [selectedClue, setSelectedClue] = useState(null);
+
+        useEffect(() => {
+            document.body.classList.toggle('clue-selected', !!selectedClue);
+            return () => {
+                document.body.classList.remove('clue-selected');
+            }
+        }, [selectedClue]);
+
+        const formatTime = (seconds) => {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        const handleSelectClue = (clueId) => {
+            setSelectedClue(prev => prev === clueId ? null : clueId);
+            setInventoryOpen(false);
+        }
+
+        const handleDeskChange = (deskId) => {
+            setActiveDesk(deskId);
+        }
+
+        const handleInventoryOpen = () => {
+            setInventoryOpen(true);
+        }
+
+        const currentDesk = DESKS.find(d => d.id === activeDesk);
+
+        return (
+            <section id="search">
+                <div className="sticky top-0 bg-[#f5efe0]/90 backdrop-blur-sm py-3 z-10 mb-4 border-y-2 border-gray-500/50 shadow-md">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-bold font-mono text-[#333]">РАБОЧЕЕ МЕСТО</h2>
+                        <div className="flex gap-4 items-center font-mono">
+                            <button onClick={handleInventoryOpen} className={`bg-white/80 border border-gray-500/50 px-3 py-1 hover:bg-white transition-all duration-150 transform active:scale-95 text-[#333] ${selectedClue ? 'ring-2 ring-red-500 bg-red-100' : ''}`}>
+                                {selectedClue ? 'ПРЕДМЕТ В РУКЕ' : `ИНВЕНТАРЬ: ${foundCluesCount}`}
+                            </button>
+                            <div>ВРЕМЯ: <span className={`font-bold text-lg transition-colors ${timeLeft < 120 ? 'text-red-600 animate-pulse' : 'text-[#B83A2D]'}`}>{formatTime(timeLeft)}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex justify-center border-b-2 border-gray-500/50 mb-4">
+                    {DESKS.map(desk => (
+                        <button
+                            key={desk.id}
+                            onClick={() => handleDeskChange(desk.id)}
+                            className={`py-2 px-6 font-mono font-bold transition-all duration-200 transform active:scale-95 ${activeDesk === desk.id ? 'bg-[#4E6851] text-white shadow-inner' : 'bg-transparent hover:bg-gray-400/20 text-[#333]'}`}
+                        >
+                            {desk.name.split(' ')[1].toUpperCase()}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="relative">
+                    {currentDesk && (
+                        <DeskComponent
+                            desk={currentDesk}
+                            onClueFound={onClueFound}
+                            onInteraction={onInteraction}
+                            interactedHotspots={interactedHotspots}
+                            selectedClue={selectedClue}
+                            setSelectedClue={setSelectedClue}
+                        />
+                    )}
+                </div>
+
+                <div className="text-center mt-8">
+                    <button onClick={onComplete} className="bg-[#333] text-white py-2 px-12 font-bold hover:bg-black transition-all duration-200 font-mono transform active:scale-95 shadow-lg">
+                        &gt;&gt; ПЕРЕЙТИ К ДОПРОСУ
+                    </button>
+                </div>
+                <ClueInventory
+                    isOpen={inventoryOpen}
+                    onClose={() => setInventoryOpen(false)}
+                    foundClues={foundClues}
+                    onSelectClue={handleSelectClue}
+                    selectedClue={selectedClue}
+                />
+            </section>
+        );
+    };
+
+    const InterrogationSection = ({ foundClues, onComplete, onNoteAdded }) => {
+        const [activeSuspect, setActiveSuspect] = useState(SuspectId.Grigory);
+        const [dialogueHistory, setDialogueHistory] = useState({
+            grigory: [],
+            elena: [],
+            mikhail: [],
+        });
+
+        const handleQuestion = (question, answer, conclusion) => {
+            setDialogueHistory(prev => ({
+                ...prev,
+                [activeSuspect]: [...prev[activeSuspect], { question, answer }]
+            }));
+            onNoteAdded(`${activeSuspect.toUpperCase()}: ${conclusion}`);
+        };
+
+        const handleSuspectChange = (suspectId) => {
+            setActiveSuspect(suspectId);
+        }
+
+        const dialogues = INTERROGATION_DIALOGUES[activeSuspect];
+        const currentSuspectImage = SUSPECTS.find(s => s.id === activeSuspect)?.imageUrl;
+        const answeredQuestions = new Set(dialogueHistory[activeSuspect].map(d => d.question));
+
+        return (
+            <section id="interrogation">
+                <h2 className="text-xl font-bold mb-4 font-mono">ДОПРОС</h2>
+                <div className="flex justify-center border-b-2 border-gray-500/50 mb-4">
+                    {SUSPECTS.map(suspect => (
+                        <button
+                            key={suspect.id}
+                            onClick={() => handleSuspectChange(suspect.id)}
+                            className={`py-2 px-6 font-mono font-bold transition-all duration-200 transform active:scale-95 ${activeSuspect === suspect.id ? 'bg-[#4E6851] text-white' : 'bg-transparent hover:bg-gray-400/20'}`}
+                        >
+                            {suspect.name.toUpperCase()}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-1">
+                        <img src={currentSuspectImage} alt={activeSuspect} className="w-full h-auto object-cover object-top border-2 border-black" />
+                    </div>
+                    <div className="md:col-span-2">
+                        <div className="bg-white/50 p-4 border border-gray-500/20 h-64 overflow-y-auto mb-4">
+                            {dialogueHistory[activeSuspect].length === 0 && <p className="text-gray-500">Начните допрос, выбрав вопрос...</p>}
+                            {dialogueHistory[activeSuspect].map((entry, index) => (
+                                <div key={index} className="mb-4">
+                                    <p className="font-bold text-[#4E6851]">Вы: <span className="font-normal text-black">{entry.question}</span></p>
+                                    <p className="font-bold text-[#B83A2D]">{activeSuspect.charAt(0).toUpperCase() + activeSuspect.slice(1)}: <span className="font-normal text-black">{entry.answer}</span></p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="space-y-2">
+                            {dialogues.map(dialogue => {
+                                const isAvailable = !dialogue.requiresClue || foundClues.has(dialogue.requiresClue);
+                                const isAnswered = answeredQuestions.has(dialogue.question);
+
+                                return (
+                                    <button
+                                        key={dialogue.id}
+                                        onClick={() => handleQuestion(dialogue.question, dialogue.answer, dialogue.conclusion)}
+                                        disabled={!isAvailable || isAnswered}
+                                        className={`w-full text-left p-2 border transition-all duration-200 transform active:scale-95 ${
+                                            isAnswered ? 'bg-gray-300 text-gray-500 cursor-not-allowed' :
+                                            isAvailable ? 'bg-white hover:bg-gray-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        }`}
+                                        title={!isAvailable ? 'Требуется улика' : ''}
+                                    >
+                                        {dialogue.question}
+                                        {!isAvailable && <span className="text-xs text-red-500 ml-2">(Требуется предмет/улика)</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="text-center mt-8">
+                    <button onClick={onComplete} className="bg-[#333] text-white py-2 px-12 font-bold hover:bg-black transition-all duration-200 font-mono transform active:scale-95">
+                        &gt;&gt; ВЫНЕСТИ ВЕРДИКТ
+                    </button>
+                </div>
+            </section>
+        );
+    };
+
+    const DeductionSection = ({ onComplete, notebookEntries }) => {
+        const [culprit, setCulprit] = useState('');
+        const [method, setMethod] = useState('');
+        const [motive, setMotive] = useState('');
+        const [isNotebookOpen, setIsNotebookOpen] = useState(false);
+
+        const handleSubmit = () => {
+            onComplete(culprit, method, motive);
+        };
+
+        return (
+            <section id="deduction">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold font-mono">ДЕДУКЦИЯ</h2>
+                    <button
+                        onClick={() => setIsNotebookOpen(true)}
+                        className="bg-[#f0e6d2] border-2 border-black px-4 py-2 font-bold font-mono hover:bg-[#e6dfcc] transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
+                    >
+                        ОТКРЫТЬ БЛОКНОТ
+                    </button>
+                </div>
+
+                <p className="mb-6">Проанализировав улики и показания, вы готовы вынести окончательный вердикт. Выберите виновного, способ утечки и мотив преступления.</p>
+
+                <div className="bg-white/40 p-6 border border-gray-400 mb-8">
+                    <div className="grid grid-cols-1 gap-6">
+                        <div>
+                            <label htmlFor="culprit" className="block font-bold mb-2 text-lg">1. КТО ВИНОВАТ?</label>
+                            <select id="culprit" value={culprit} onChange={e => setCulprit(e.target.value)} className="w-full p-3 border-2 border-black bg-white font-mono text-lg cursor-pointer hover:bg-gray-50">
+                                <option value="">-- Выберите подозреваемого --</option>
+                                <option value="grigory">Григорий (Сисадмин)</option>
+                                <option value="elena">Елена (Менеджер)</option>
+                                <option value="mikhail">Михаил (Главбух)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="method" className="block font-bold mb-2 text-lg">2. КАК СЛИЛИ ДАННЫЕ?</label>
+                            <select id="method" value={method} onChange={e => setMethod(e.target.value)} className="w-full p-3 border-2 border-black bg-white font-mono text-lg cursor-pointer hover:bg-gray-50">
+                                <option value="">-- Выберите метод --</option>
+                                <option value="phishing">Фишинг / Шантаж / Соц. инженерия</option>
+                                <option value="hack">Прямой взлом сервера (Брутфорс)</option>
+                                <option value="insider">Халатность / Случайная утечка</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="motive" className="block font-bold mb-2 text-lg">3. КАКОЙ БЫЛ МОТИВ?</label>
+                            <select id="motive" value={motive} onChange={e => setMotive(e.target.value)} className="w-full p-3 border-2 border-black bg-white font-mono text-lg cursor-pointer hover:bg-gray-50">
+                                <option value="">-- Выберите мотив --</option>
+                                <option value="revenge">Месть компании за обиды</option>
+                                <option value="stupidity">Глупость / Некомпетентность</option>
+                                <option value="debt">Финансовые проблемы / Долги</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="text-center">
+                    <button
+                        onClick={handleSubmit}
+                        disabled={!culprit || !method || !motive}
+                        className="bg-[#B83A2D] text-white py-4 px-16 font-bold text-xl hover:bg-[#9c3025] transition-all duration-200 font-mono transform active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-xl border-4 border-[#8b0000]"
+                    >
+                        ВЫНЕСТИ ПРИГОВОР
+                    </button>
+                </div>
+
+                {/* Notebook Modal */}
+                <Modal isOpen={isNotebookOpen} onClose={() => setIsNotebookOpen(false)} title="БЛОКНОТ ДЕТЕКТИВА">
+                     <div className="bg-yellow-50 p-4 border border-gray-200 min-h-[300px] max-h-[60vh] overflow-y-auto font-mono text-sm leading-relaxed">
+                        {notebookEntries.length === 0 ? (
+                            <p className="text-gray-500 italic text-center mt-10">Вы пока не сделали никаких важных заметок во время допроса.</p>
+                        ) : (
+                            <ul className="list-disc list-inside space-y-3">
+                                {notebookEntries.map((note, idx) => (
+                                    <li key={idx} className="pl-2 border-b border-gray-300 pb-2">
+                                        {note}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                     </div>
+                </Modal>
+            </section>
+        );
+    };
+
+    const EndScreen = ({ rank, message, onRestart }) => {
+        return (
+            <section id="end-screen" className="text-center pb-8 animate-fade-in">
+                <h2 className="text-xl font-bold mb-4 font-mono">РЕЗУЛЬТАТ РАССЛЕДОВАНИЯ</h2>
+                <div className="bg-white/50 p-6 border-2 border-[#4E6851] shadow-md">
+                    <p className="text-sm font-mono">ВАШ РАНГ:</p>
+                    <h3 className="text-3xl font-bold text-[#B83A2D] font-mono mb-4">{rank.toUpperCase()}</h3>
+                    <p className="text-md font-mono leading-relaxed">{message}</p>
+                </div>
+                <div className="mt-8 mb-16">
+                    <button onClick={onRestart} className="bg-[#333] text-white py-2 px-12 font-bold hover:bg-black transition-all duration-200 font-mono transform active:scale-95 shadow-lg border-2 border-transparent hover:border-gray-500">
+                        НАЧАТЬ ЗАНОВО
+                    </button>
+                </div>
+
+                <div className="border-t-4 border-double border-gray-400 pt-10 mt-10">
+                    <h2 className="text-xl font-bold mb-8 font-mono text-[#333] uppercase tracking-widest">Автор проекта</h2>
+
+                    <div className="max-w-sm mx-auto group bg-white p-4 border border-gray-500/20 transition-shadow duration-300">
+                        <div className="w-full h-[400px] mb-4 border-2 border-black overflow-hidden bg-gray-200 relative">
+                            <img
+                                src="https://i.ibb.co/YF9mrYKW/photo-2025-12-24-22-59-20.jpg"
+                                alt="Оля Ковальчук"
+                                className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                            />
+                        </div>
+
+                        <h3 className="font-bold text-lg font-mono text-[#B83A2D] mb-1">E-LEARNING DEVELOPER</h3>
+                        <p className="font-bold text-xl mb-3 font-mono">Оля Ковальчук</p>
+
+                        <p className="text-sm text-left mb-6 font-mono text-gray-700 leading-relaxed border-t border-dashed border-gray-300 pt-3">
+                            Создаю интерактивные форматы, которые вовлекают. Объединяю сторителлинг и практику, чтобы обучение было не только полезным, но и захватывающим.
+                        </p>
+
+                        <a
+                            href="https://t.me/okcrazyart"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full bg-[#B83A2D] text-white py-3 font-bold hover:bg-[#9c3025] transition-all duration-200 font-mono transform active:scale-95 shadow-md flex items-center justify-center gap-2"
+                        >
+                            СВЯЗАТЬСЯ СО МНОЙ
+                        </a>
+                    </div>
+                </div>
+            </section>
+        );
+    };
+
+    /* ================= MAIN APP COMPONENT ================= */
+
+    const App = () => {
+        const [isLoading, setIsLoading] = useState(true);
+        const [gameStage, setGameStage] = useState(GameStage.Intro);
+        const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
+        const [timerId, setTimerId] = useState(null);
+        const [foundClues, setFoundClues] = useState(new Set());
+        const [interactedHotspots, setInteractedHotspots] = useState(new Set());
+        const [notebookEntries, setNotebookEntries] = useState([]);
+        const [finalScore, setFinalScore] = useState(null);
+
+        useEffect(() => {
+            const imageUrls = [
+                ...SUSPECTS.map(s => s.imageUrl),
+                ...DESKS.map(d => d.imageUrl)
+            ];
+
+            const preloadImages = (urls) => {
+                const promises = urls.map(url => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.src = url;
+                        img.onload = () => resolve(true);
+                        img.onerror = () => resolve(false);
+                    });
+                });
+                return Promise.all(promises);
+            };
+
+            preloadImages(imageUrls)
+                .then(() => {
+                    setTimeout(() => setIsLoading(false), 500);
+                })
+                .catch(err => {
+                    console.error("Failed to preload images", err);
+                    setTimeout(() => setIsLoading(false), 500);
+                });
+        }, []);
+
+        const startGame = useCallback(() => {
+            setGameStage(GameStage.Dossier);
+            setTimeLeft(TOTAL_TIME);
+            setFoundClues(new Set());
+            setInteractedHotspots(new Set());
+            setNotebookEntries([]);
+            setFinalScore(null);
+        }, []);
+
+        const advanceStage = useCallback((stage) => {
+            setGameStage(stage);
+        }, []);
+
+        const startTimer = useCallback(() => {
+            if (timerId) clearInterval(timerId);
+            const newTimerId = window.setInterval(() => {
+                setTimeLeft(prevTime => {
+                    if (prevTime <= 1) {
+                        clearInterval(newTimerId);
+                        setGameStage(GameStage.End);
+                        setFinalScore({ rank: 'УВОЛЕН', message: 'Время вышло. Директор в бешенстве. Вы не успели найти виновного, и база данных утекла полностью.' });
+                        return 0;
+                    }
+                    return prevTime - 1;
+                });
+            }, 1000);
+            setTimerId(newTimerId);
+        }, [timerId]);
+
+        const stopTimer = useCallback(() => {
+            if (timerId) {
+                clearInterval(timerId);
+                setTimerId(null);
+            }
+        }, [timerId]);
+
+        useEffect(() => {
+            if (gameStage === GameStage.Search) {
+                startTimer();
+            } else {
+                stopTimer();
+            }
+            return () => {
+                if (timerId) clearInterval(timerId);
+            };
+        }, [gameStage]);
+
+        const handleClueFound = (clueId, timeCost, hotspotId) => {
+            setFoundClues(prev => new Set(prev).add(clueId));
+            setTimeLeft(prev => Math.max(0, prev - timeCost));
+            setInteractedHotspots(prev => new Set(prev).add(hotspotId));
+        };
+
+        const handleInteraction = (timeCost, hotspotId) => {
+            setTimeLeft(prev => Math.max(0, prev - timeCost));
+            setInteractedHotspots(prev => new Set(prev).add(hotspotId));
+        };
+
+        const handleNoteAdded = (note) => {
+            setNotebookEntries(prev => [...prev, note]);
+        };
+
+        const handleDeduction = (culprit, method, motive) => {
+            stopTimer();
+            setGameStage(GameStage.End);
+
+            const isCulpritCorrect = culprit === 'elena';
+            const isMethodCorrect = method === 'phishing';
+            const isMotiveCorrect = motive === 'debt';
+
+            // Strict evidence logic for Elena
+            // 1. Motive: Debt Letter
+            const hasMotiveEvidence = foundClues.has(ClueId.DebtLetter);
+            // 2. The Plan: Notepad Entry
+            const hasPlanEvidence = foundClues.has(ClueId.NotepadEntry);
+            // 3. The Weapon: Trojan Flash Drive (MUST be checked on computer, not just picked up)
+            // Note: 'trojan_flash_drive' is obtained by using the flash drive, not just picking it up.
+            const hasWeaponEvidence = foundClues.has(ClueId.TrojanFlashDrive);
+            // 4. Intent/Blackmail: Phone Drafts OR Threatening SMS
+            const hasIntentEvidence = foundClues.has(ClueId.ElenaFlipPhone) || foundClues.has(ClueId.ThreateningSMS);
+
+            // Count how many STRONG pieces of evidence were found
+            let strongEvidenceCount = 0;
+            if (hasMotiveEvidence) strongEvidenceCount++;
+            if (hasPlanEvidence) strongEvidenceCount++;
+            if (hasWeaponEvidence) strongEvidenceCount++;
+            if (hasIntentEvidence) strongEvidenceCount++;
+
+            if (isCulpritCorrect && isMethodCorrect && isMotiveCorrect) {
+                if (strongEvidenceCount === 4) {
+                     setFinalScore({
+                         rank: 'ЛЕГЕНДА СЫСКА',
+                         message: 'Идеальное расследование! Вы нашли все ключевые улики: план в блокноте, письмо от коллекторов, черновики с угрозами и подтвердили наличие трояна на флешке. Вина Елены доказана на 100%, адвокаты бессильны. Вам выписали тройную премию.'
+                     });
+                } else if (strongEvidenceCount >= 2) {
+                    setFinalScore({
+                        rank: 'ОПЫТНЫЙ СЛЕДОВАТЕЛЬ',
+                        message: 'Отличная работа. Вы верно определили преступника и мотив. У вас есть пара железных улик, но картина преступления восстановлена не полностью (возможно, вы не проверили флешку или не нашли план). Тем не менее, Елена арестована.'
+                    });
+                } else {
+                     setFinalScore({
+                         rank: 'ЧИСТАЯ ИНТУИЦИЯ',
+                         message: 'Вы угадали! Елена действительно виновна, и мотив с долгами верный. Но у вас на руках почти нет твердых улик. В суде будет сложно доказать её вину без блокнота или данных с флешки. Директор рад, что крыса найдена, но просит впредь искать доказательства, а не гадать.'
+                     });
+                }
+            } else if (isCulpritCorrect && (!isMethodCorrect || !isMotiveCorrect)) {
+                 setFinalScore({
+                     rank: 'СЛЕДОВАТЕЛЬ-НОВИЧОК',
+                     message: 'Вы поймали нужного человека (Елену), но не смогли точно понять схему или мотив преступления. Адвокаты могут развалить дело в суде, так как вы путаетесь в показаниях. Директор смотрит на вас с сомнением.'
+                 });
+            } else if (culprit === 'grigory') {
+                setFinalScore({
+                    rank: 'ОШИБКА СЛЕДСТВИЯ',
+                    message: 'Вы обвинили Григория. Да, он нарушал правила (майнинг), но он не сливал базу. Настоящий преступник (Елена) осталась на свободе и подставила сисадмина. Вы уволены за некомпетентность.'
+                });
+            } else if (culprit === 'mikhail') {
+                 setFinalScore({
+                    rank: 'ПОЗОР',
+                    message: 'Вы обвинили старого бухгалтера. Михаил перепутал файлы по глупости, но злого умысла не имел. Коллектив вас ненавидит за травлю старика. Настоящий вор сбежал с деньгами.'
+                });
+            } else {
+                 setFinalScore({
+                    rank: 'ПРОВАЛ',
+                    message: 'Ваша версия рассыпалась. Вы обвинили невиновных, не поняли мотивов. Директор в ярости выставил вас за дверь.'
+                });
+            }
+        };
+
+        const renderSection = (stage, component) => {
+            return (
+                <div className={`transition-opacity duration-700 opacity-100`}>
+                    {component}
+                </div>
+            );
+        };
+
+        if (isLoading) {
+            return <LoadingScreen />;
+        }
+
+        return (
+            <div className="min-h-screen font-sans p-4 sm:p-8 flex items-center justify-center">
+                <div className="max-w-4xl w-full mx-auto paper-texture shadow-2xl p-4 sm:p-8 border-2 border-gray-600/50 relative z-10">
+                    <header className="flex justify-between items-start border-b-4 border-double border-[#4E6851] pb-4 mb-8 relative">
+                        <div className="text-left">
+                            <h1 className="text-3xl sm:text-4xl font-bold font-mono tracking-wider text-[#1a1a1a]">ДЕЛО №13-82</h1>
+                            <p className="text-sm font-mono text-[#333]">Инцидент: УТЕЧКА БАЗЫ ДАННЫХ (КЛАСС А)</p>
+                        </div>
+                        <div className="absolute top-2 right-2 text-center flex flex-col items-end gap-4">
+                            <div className="text-sm font-bold text-[#B83A2D] border-4 border-[#B83A2D] p-2 rotate-12 font-mono opacity-80 mix-blend-multiply">
+                                КОНФИДЕНЦИАЛЬНО
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="space-y-12">
+                        {gameStage >= GameStage.Intro && renderSection(GameStage.Intro, <IntroSection onStart={startGame} />)}
+
+                        {gameStage >= GameStage.Dossier && (
+                            <div className={`transition-all duration-700 ease-in-out ${gameStage > GameStage.Intro ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                                 {renderSection(GameStage.Dossier, <DossierSection onComplete={() => advanceStage(GameStage.Search)} />)}
+                            </div>
+                        )}
+
+                        {gameStage >= GameStage.Search && (
+                            <div className={`transition-all duration-700 ease-in-out ${gameStage > GameStage.Dossier ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                                 {renderSection(GameStage.Search,
+                                    <SearchSection
+                                        timeLeft={timeLeft}
+                                        foundClues={Array.from(foundClues)}
+                                        foundCluesCount={foundClues.size}
+                                        onClueFound={handleClueFound}
+                                        onInteraction={handleInteraction}
+                                        interactedHotspots={interactedHotspots}
+                                        onComplete={() => advanceStage(GameStage.Interrogation)}
+                                    />
+                                 )}
+                            </div>
+                        )}
+
+                        {gameStage >= GameStage.Interrogation && (
+                             <div className={`transition-all duration-700 ease-in-out ${gameStage > GameStage.Search ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                                {renderSection(GameStage.Interrogation,
+                                    <InterrogationSection
+                                        foundClues={foundClues}
+                                        onNoteAdded={handleNoteAdded}
+                                        onComplete={() => advanceStage(GameStage.Deduction)}
+                                    />
+                                )}
+                            </div>
+                        )}
+
+                        {gameStage >= GameStage.Deduction && (
+                            <div className={`transition-all duration-700 ease-in-out ${gameStage > GameStage.Interrogation ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                                {renderSection(GameStage.Deduction, <DeductionSection onComplete={handleDeduction} notebookEntries={notebookEntries} />)}
+                            </div>
+                        )}
+
+                        {gameStage === GameStage.End && finalScore && (
+                            <div className={`transition-all duration-700 ease-in-out ${gameStage === GameStage.End ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                                 <EndScreen
+                                    rank={finalScore.rank}
+                                    message={finalScore.message}
+                                    onRestart={startGame}
+                                />
+                            </div>
+                        )}
+                    </main>
+                </div>
+            </div>
+        );
+    };
+
+    /* ================= INDEX ================= */
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(
+        <React.StrictMode>
+            <App />
+        </React.StrictMode>
+    );
+    </script>
+  </body>
+</html>
