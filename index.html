@@ -2,24 +2,24 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Дело №13-82</title>
-
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- React & ReactDOM (UMD for browser usage) -->
+    
+    <!-- React & ReactDOM (UMD) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-    <!-- Babel for JSX transformation in browser -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Babel for JSX transformation -->
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
-
+    
     <style>
       :root {
         --font-main: 'JetBrains Mono', monospace;
@@ -27,12 +27,13 @@
       }
 
       body {
-        background-color: #1a1a1a;
+        background-color: #101010;
         font-family: var(--font-main);
         color: #1a1a1a;
         overflow-x: hidden;
+        margin: 0;
       }
-
+      
       /* Override Tailwind defaults to ensure consistency */
       .font-mono {
         font-family: var(--font-main) !important;
@@ -41,13 +42,13 @@
       .font-sans {
         font-family: var(--font-header) !important;
       }
-
+      
       h1, h2, h3, button {
         font-family: var(--font-header);
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
-
+      
       /* Retro Cursors */
       .hotspot {
         cursor: help;
@@ -56,25 +57,14 @@
       }
       .hotspot:hover {
          border: 1px solid rgba(255, 0, 0, 0.3);
+         background-color: rgba(255, 255, 0, 0.05);
       }
 
       body.clue-selected, body.clue-selected .hotspot {
         cursor: copy;
       }
 
-      /* VFX: Noise (Subtle) */
-      .noise {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        pointer-events: none;
-        z-index: 98;
-        opacity: 0.03;
-        background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="1"/%3E%3C/svg%3E');
-      }
-
+      /* Animations */
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -82,16 +72,16 @@
       .animate-fade-in {
         animation: fadeIn 0.6s ease-out;
       }
-
+      
       /* High Contrast Paper */
       .paper-texture {
-         background-color: #f7f1e3; /* Much lighter for readability */
+         background-color: #f7f1e3;
          background-image: linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);
-         background-size: 100% 24px; /* Notebook lines effect */
+         background-size: 100% 24px;
          box-shadow: 0 0 50px rgba(0,0,0,0.8);
          border: 1px solid #d1ccc0;
       }
-
+      
       .paper-bg {
          background-color: #2c2c2c;
          background-image: repeating-linear-gradient(45deg, #2b2b2b 25%, transparent 25%, transparent 75%, #2b2b2b 75%, #2b2b2b), repeating-linear-gradient(45deg, #2b2b2b 25%, #222 25%, #222 75%, #2b2b2b 75%, #2b2b2b);
@@ -110,17 +100,17 @@
         background: #8b0000;
       }
 
-      #error-container {
+      /* Error Container */
+      #error-boundary {
         display: none;
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: #000; color: red;
-        z-index: 9999;
-        padding: 20px;
-        font-family: monospace;
+        background: #000; color: #ff0000;
+        z-index: 9999; padding: 20px;
+        white-space: pre-wrap; font-family: monospace;
       }
     </style>
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
@@ -131,26 +121,30 @@
 </script>
 </head>
   <body class="paper-bg">
-    <div class="noise"></div>
     <div id="root"></div>
-    <div id="error-container"></div>
+    <div id="error-boundary"></div>
 
     <script>
-        // Global error handler to catch React or Script errors
-        window.onerror = function(message, source, lineno, colno, error) {
-            const el = document.getElementById('error-container');
-            if (el) {
-                el.style.display = 'block';
-                el.innerHTML = '<h1>CRITICAL ERROR</h1><p>' + message + '</p><p>' + source + ':' + lineno + '</p>';
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            var container = document.getElementById('error-boundary');
+            if (container) {
+                container.style.display = 'block';
+                container.innerHTML = '<h1>CRITICAL ERROR</h1><p>' + msg + '</p><p>Line: ' + lineNo + '</p>';
             }
+            return false;
         };
     </script>
 
-    <script type="text/babel">
-    const { useState, useEffect, useCallback, useMemo } = React;
+    <script type="text/babel" data-presets="react,typescript">
+    /*******************************************************
+     * SINGLE FILE APPLICATION BUILD
+     * Все компоненты объединены для работы без сборщика
+     *******************************************************/
 
-    // --- TYPES & CONSTANTS (Converted to JS Objects) ---
+    const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
+    /* ---------------- types.ts (Converted to Const Objects) ---------------- */
+    
     const GameStage = {
         Intro: 0,
         Dossier: 1,
@@ -167,8 +161,11 @@
     };
 
     const ClueId = {
+        // Physical Items
         FloppyDisk: 'item_floppy',
         FlashDrive: 'item_flash',
+        
+        // Intel
         MinerRDP: 'miner_rdp',
         PasswordSticker: 'password_sticker',
         ThreateningSMS: 'threatening_sms',
@@ -182,7 +179,8 @@
         ElenaFlipPhone: 'elena_phone_drafts',
     };
 
-    const TOTAL_TIME = 45 * 60;
+    /* ---------------- constants.ts ---------------- */
+    const TOTAL_TIME = 45 * 60; 
 
     const SUSPECTS = [
         {
@@ -318,7 +316,7 @@
     const CLUE_DESCRIPTIONS = {
         [ClueId.FloppyDisk]: { name: "Дискета с логами", desc: 'Забрана у сисадмина. Нужно вставить в терминал, чтобы прочесть логи входов.', isItem: true },
         [ClueId.FlashDrive]: { name: "Подозрительная флешка", desc: 'Забрана у Елены. Слишком гламурная для рабочих файлов. Надо проверить.', isItem: true },
-
+        
         [ClueId.MinerRDP]: { name: "Майнер на сервере", desc: 'Гриша превратил серверную в майнинг-ферму. И открыл порты настежь.' },
         [ClueId.PasswordSticker]: { name: "Пароль под кружкой", desc: 'Пароль супер-админа приклеен жвачкой к столу. Классика.' },
         [ClueId.ThreateningSMS]: { name: "Шантаж Гриши", desc: 'Елена держит сисадмина за горло, угрожая сдать его ферму.' },
@@ -383,17 +381,18 @@
         ]}
     ];
 
-    // --- COMPONENTS ---
+    /* ---------------- COMPONENTS ---------------- */
 
+    /* Modal */
     const Modal = ({ isOpen, onClose, title, children }) => {
         if (!isOpen) return null;
 
         return (
-            <div
+            <div 
                 className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4"
                 onClick={onClose}
             >
-                <div
+                <div 
                     className="bg-[#DCC9A9] text-[#333] p-6 rounded-lg shadow-xl w-full max-w-lg relative border-4 border-[#4E6851]"
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -409,6 +408,7 @@
         );
     };
 
+    /* LoadingScreen */
     const LoadingScreen = () => {
         return (
             <div className="min-h-screen bg-[#f7f1e3] flex items-center justify-center p-4">
@@ -421,7 +421,7 @@
                         <h1 className="text-4xl font-bold font-mono tracking-widest text-[#1a1a1a] mb-8">
                             ДЕЛО №13-82
                         </h1>
-
+                        
                         <div className="flex justify-center my-8">
                             <div className="w-16 h-16 border-t-4 border-[#8b0000] rounded-full animate-spin"></div>
                         </div>
@@ -441,159 +441,7 @@
         );
     };
 
-    const ClueInventory = ({ isOpen, onClose, foundClues, onSelectClue, selectedClue }) => {
-        const handleSelect = (clueId) => {
-            if (CLUE_DESCRIPTIONS[clueId].isItem) {
-                 onSelectClue(clueId);
-            }
-        }
-
-        return (
-            <Modal isOpen={isOpen} onClose={onClose} title="Инвентарь и Улики">
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                    {foundClues.length === 0 ? (
-                        <p className="text-gray-500">Пусто.</p>
-                    ) : (
-                        foundClues.map(clueId => {
-                            const isItem = CLUE_DESCRIPTIONS[clueId].isItem;
-                            return (
-                                <div
-                                    key={clueId}
-                                    onClick={() => handleSelect(clueId)}
-                                    className={`p-3 border-2 transition-all duration-200
-                                        ${isItem ? 'cursor-pointer hover:bg-yellow-100/20 border-yellow-600/50' : 'border-gray-500/30'}
-                                        ${selectedClue === clueId ? 'border-[#B83A2D] bg-red-100/50 ring-2 ring-red-500' : ''}
-                                    `}
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <h4 className={`font-bold ${isItem ? 'text-[#B83A2D]' : 'text-[#4E6851]'}`}>
-                                            {CLUE_DESCRIPTIONS[clueId].name}
-                                        </h4>
-                                        {isItem && <span className="text-xs bg-[#B83A2D] text-white px-2 py-0.5 rounded">ПРЕДМЕТ</span>}
-                                    </div>
-                                    <p className="text-sm">{CLUE_DESCRIPTIONS[clueId].desc}</p>
-                                    {isItem && selectedClue === clueId && (
-                                        <p className="text-xs text-[#B83A2D] mt-2 font-bold animate-pulse">>>> ВЫБРАНО: Примените на объект</p>
-                                    )}
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
-                <p className="text-xs mt-4 text-center text-gray-600">
-                    Предметы (отмечены красным) можно выбирать и применять на объекты в офисе. Остальное — просто информация.
-                </p>
-            </Modal>
-        );
-    };
-
-    const DeskComponent = ({ desk, onClueFound, onInteraction, interactedHotspots, selectedClue, setSelectedClue }) => {
-        const [selectedHotspot, setSelectedHotspot] = useState(null);
-        const [interactionResult, setInteractionResult] = useState(null);
-        const [imageError, setImageError] = useState(false);
-
-        const handleHotspotClick = (hotspot) => {
-            if (selectedClue) {
-                const useInteraction = hotspot.use?.find(u => u.clueId === selectedClue);
-                if (useInteraction) {
-                    setInteractionResult(useInteraction.result);
-                    if (useInteraction.newClue) {
-                        onClueFound(useInteraction.newClue, useInteraction.time, hotspot.id + '_used');
-                    } else {
-                        onInteraction(useInteraction.time, hotspot.id + '_used');
-                    }
-                } else {
-                    setInteractionResult("Это не работает.");
-                }
-                setSelectedHotspot(hotspot);
-                setSelectedClue(null);
-                return;
-            }
-
-            if (interactedHotspots.has(hotspot.id)) {
-                setInteractionResult("Вы уже осмотрели этот предмет.");
-                setSelectedHotspot(hotspot);
-            } else {
-                setSelectedHotspot(hotspot);
-                setInteractionResult(null);
-            }
-        };
-
-        const handleInteractionChoice = (type) => {
-            if (!selectedHotspot) return;
-
-            const interaction = selectedHotspot.interactions[type];
-            setInteractionResult(interaction.result);
-
-            if ('clue' in interaction && interaction.clue) {
-                onClueFound(interaction.clue, interaction.time, selectedHotspot.id);
-            } else {
-                onInteraction(interaction.time, selectedHotspot.id);
-            }
-        };
-
-        const closeModal = () => {
-            setSelectedHotspot(null);
-            setInteractionResult(null);
-        };
-
-        return (
-            <div className="relative w-full max-w-4xl mx-auto border-4 border-[#333] bg-[#222]">
-                {!imageError ? (
-                    <img
-                        src={desk.imageUrl}
-                        alt={desk.name}
-                        className="w-full h-auto block"
-                        onError={() => setImageError(true)}
-                    />
-                ) : (
-                    <div className="w-full h-[300px] flex items-center justify-center bg-gray-300 text-gray-500 font-mono">
-                        <p className="text-center p-4">Изображение стола не загрузилось. Проверьте соединение. (Хотспоты доступны)</p>
-                    </div>
-                )}
-
-                <div className="absolute inset-0">
-                    {desk.hotspots.map(hotspot => (
-                        <div
-                            key={hotspot.id}
-                            className="absolute hotspot"
-                            style={{
-                                top: hotspot.top,
-                                left: hotspot.left,
-                                width: hotspot.width,
-                                height: hotspot.height,
-                            }}
-                            onClick={() => handleHotspotClick(hotspot)}
-                            title={hotspot.description}
-                        />
-                    ))}
-                </div>
-
-                <Modal isOpen={!!selectedHotspot} onClose={closeModal} title={selectedHotspot?.description || ''}>
-                    {selectedHotspot && (
-                        <div>
-                            {interactionResult ? (
-                                <div>
-                                    <p className="mb-4 p-4 bg-gray-200/50 border-l-4 border-[#4E6851]">{interactionResult}</p>
-                                    <button onClick={closeModal} className="w-full bg-[#333] text-white py-2 px-6 font-bold hover:bg-black transition-all duration-200 transform active:scale-95">Закрыть</button>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-4">
-                                    <button onClick={() => handleInteractionChoice('quick')} className="w-full bg-[#4E6851] text-white py-2 px-6 font-bold hover:bg-[#3e5341] transition-all duration-200 transform active:scale-95">
-                                        {selectedHotspot.interactions.quick.text}
-                                    </button>
-                                    <button onClick={() => handleInteractionChoice('deep')} className="w-full bg-[#B83A2D] text-white py-2 px-6 font-bold hover:bg-[#9c3025] transition-all duration-200 transform active:scale-95">
-                                        {selectedHotspot.interactions.deep.text}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </Modal>
-            </div>
-        );
-    };
-
+    /* IntroSection */
     const IntroSection = ({ onStart }) => {
         const [rulesModalOpen, setRulesModalOpen] = useState(false);
         const [briefingModalOpen, setBriefingModalOpen] = useState(false);
@@ -672,6 +520,7 @@
         );
     };
 
+    /* DossierSection */
     const DossierSection = ({ onComplete }) => {
         return (
             <section id="dossier" className="animate-fade-in">
@@ -680,10 +529,10 @@
                     {SUSPECTS.map(suspect => (
                         <div key={suspect.id} className="group bg-white/50 p-4 border border-gray-500/20 text-center flex flex-col h-full">
                             <div className="w-full h-[400px] mb-4 border-2 border-black overflow-hidden bg-gray-200">
-                                <img
-                                    src={suspect.imageUrl}
-                                    alt={suspect.name}
-                                    className="w-full h-full object-cover object-top transition-transform duration-500 ease-in-out group-hover:scale-105"
+                                <img 
+                                    src={suspect.imageUrl} 
+                                    alt={suspect.name} 
+                                    className="w-full h-full object-cover object-top transition-transform duration-500 ease-in-out group-hover:scale-105" 
                                 />
                             </div>
                             <h3 className="font-bold text-lg font-mono text-[#B83A2D]">{suspect.role.toUpperCase()}</h3>
@@ -701,6 +550,162 @@
         );
     };
 
+    /* ClueInventory */
+    const ClueInventory = ({ isOpen, onClose, foundClues, onSelectClue, selectedClue }) => { 
+        const handleSelect = (clueId) => { 
+            if (CLUE_DESCRIPTIONS[clueId].isItem) {
+                 onSelectClue(clueId); 
+            }
+        } 
+
+        return ( 
+            <Modal isOpen={isOpen} onClose={onClose} title="Инвентарь и Улики"> 
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2"> 
+                    {foundClues.length === 0 ? ( 
+                        <p className="text-gray-500">Пусто.</p> 
+                    ) : ( 
+                        foundClues.map(clueId => {
+                            const isItem = CLUE_DESCRIPTIONS[clueId].isItem;
+                            return (
+                                <div 
+                                    key={clueId} 
+                                    onClick={() => handleSelect(clueId)} 
+                                    className={`p-3 border-2 transition-all duration-200 
+                                        ${isItem ? 'cursor-pointer hover:bg-yellow-100/20 border-yellow-600/50' : 'border-gray-500/30'}
+                                        ${selectedClue === clueId ? 'border-[#B83A2D] bg-red-100/50 ring-2 ring-red-500' : ''}
+                                    `} 
+                                > 
+                                    <div className="flex justify-between items-center">
+                                        <h4 className={`font-bold ${isItem ? 'text-[#B83A2D]' : 'text-[#4E6851]'}`}>
+                                            {CLUE_DESCRIPTIONS[clueId].name}
+                                        </h4>
+                                        {isItem && <span className="text-xs bg-[#B83A2D] text-white px-2 py-0.5 rounded">ПРЕДМЕТ</span>}
+                                    </div>
+                                    <p className="text-sm">{CLUE_DESCRIPTIONS[clueId].desc}</p> 
+                                    {isItem && selectedClue === clueId && (
+                                        <p className="text-xs text-[#B83A2D] mt-2 font-bold animate-pulse">>>> ВЫБРАНО: Примените на объект</p>
+                                    )}
+                                </div> 
+                            );
+                        }) 
+                    )} 
+                </div> 
+                <p className="text-xs mt-4 text-center text-gray-600">
+                    Предметы (отмечены красным) можно выбирать и применять на объекты в офисе. Остальное — просто информация.
+                </p> 
+            </Modal> 
+        ); 
+    }; 
+
+    /* DeskComponent */
+    const DeskComponent = ({ desk, onClueFound, onInteraction, interactedHotspots, selectedClue, setSelectedClue }) => {
+        const [selectedHotspot, setSelectedHotspot] = useState(null);
+        const [interactionResult, setInteractionResult] = useState(null);
+        const [imageError, setImageError] = useState(false);
+
+        const handleHotspotClick = (hotspot) => {
+            if (selectedClue) {
+                const useInteraction = hotspot.use?.find(u => u.clueId === selectedClue);
+                if (useInteraction) {
+                    setInteractionResult(useInteraction.result);
+                    if (useInteraction.newClue) {
+                        onClueFound(useInteraction.newClue, useInteraction.time, hotspot.id + '_used');
+                    } else {
+                        onInteraction(useInteraction.time, hotspot.id + '_used');
+                    }
+                } else {
+                    setInteractionResult("Это не работает.");
+                }
+                setSelectedHotspot(hotspot);
+                setSelectedClue(null);
+                return;
+            }
+
+            if (interactedHotspots.has(hotspot.id)) {
+                setInteractionResult("Вы уже осмотрели этот предмет.");
+                setSelectedHotspot(hotspot);
+            } else {
+                setSelectedHotspot(hotspot);
+                setInteractionResult(null);
+            }
+        };
+        
+        const handleInteractionChoice = (type) => {
+            if (!selectedHotspot) return;
+
+            const interaction = selectedHotspot.interactions[type];
+            setInteractionResult(interaction.result);
+
+            if ('clue' in interaction && interaction.clue) {
+                onClueFound(interaction.clue, interaction.time, selectedHotspot.id);
+            } else {
+                onInteraction(interaction.time, selectedHotspot.id);
+            }
+        };
+
+        const closeModal = () => {
+            setSelectedHotspot(null);
+            setInteractionResult(null);
+        };
+
+        return (
+            <div className="relative w-full max-w-4xl mx-auto border-4 border-[#333] bg-[#222]">
+                {!imageError ? (
+                    <img 
+                        src={desk.imageUrl} 
+                        alt={desk.name} 
+                        className="w-full h-auto block"
+                        onError={() => setImageError(true)}
+                    />
+                ) : (
+                    <div className="w-full h-[300px] flex items-center justify-center bg-gray-300 text-gray-500 font-mono">
+                        <p className="text-center p-4">Изображение стола не загрузилось. Проверьте соединение. (Хотспоты доступны)</p>
+                    </div>
+                )}
+
+                <div className="absolute inset-0">
+                    {desk.hotspots.map(hotspot => (
+                        <div
+                            key={hotspot.id}
+                            className="absolute hotspot"
+                            style={{
+                                top: hotspot.top,
+                                left: hotspot.left,
+                                width: hotspot.width,
+                                height: hotspot.height,
+                            }}
+                            onClick={() => handleHotspotClick(hotspot)}
+                            title={hotspot.description}
+                        />
+                    ))}
+                </div>
+
+                <Modal isOpen={!!selectedHotspot} onClose={closeModal} title={selectedHotspot?.description || ''}>
+                    {selectedHotspot && (
+                        <div>
+                            {interactionResult ? (
+                                <div>
+                                    <p className="mb-4 p-4 bg-gray-200/50 border-l-4 border-[#4E6851]">{interactionResult}</p>
+                                    <button onClick={closeModal} className="w-full bg-[#333] text-white py-2 px-6 font-bold hover:bg-black transition-all duration-200 transform active:scale-95">Закрыть</button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-4">
+                                    <button onClick={() => handleInteractionChoice('quick')} className="w-full bg-[#4E6851] text-white py-2 px-6 font-bold hover:bg-[#3e5341] transition-all duration-200 transform active:scale-95">
+                                        {selectedHotspot.interactions.quick.text}
+                                    </button>
+                                    <button onClick={() => handleInteractionChoice('deep')} className="w-full bg-[#B83A2D] text-white py-2 px-6 font-bold hover:bg-[#9c3025] transition-all duration-200 transform active:scale-95">
+                                        {selectedHotspot.interactions.deep.text}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </Modal>
+            </div>
+        );
+    };
+
+    /* SearchSection */
     const SearchSection = ({ timeLeft, foundClues, foundCluesCount, onClueFound, onInteraction, interactedHotspots, onComplete }) => {
         const [activeDesk, setActiveDesk] = useState(SuspectId.Grigory);
         const [inventoryOpen, setInventoryOpen] = useState(false);
@@ -723,7 +728,7 @@
             setSelectedClue(prev => prev === clueId ? null : clueId);
             setInventoryOpen(false);
         }
-
+        
         const handleDeskChange = (deskId) => {
             setActiveDesk(deskId);
         }
@@ -750,7 +755,7 @@
 
                 <div className="flex justify-center border-b-2 border-gray-500/50 mb-4">
                     {DESKS.map(desk => (
-                        <button
+                        <button 
                             key={desk.id}
                             onClick={() => handleDeskChange(desk.id)}
                             className={`py-2 px-6 font-mono font-bold transition-all duration-200 transform active:scale-95 ${activeDesk === desk.id ? 'bg-[#4E6851] text-white shadow-inner' : 'bg-transparent hover:bg-gray-400/20 text-[#333]'}`}
@@ -762,9 +767,9 @@
 
                 <div className="relative">
                     {currentDesk && (
-                        <DeskComponent
-                            desk={currentDesk}
-                            onClueFound={onClueFound}
+                        <DeskComponent 
+                            desk={currentDesk} 
+                            onClueFound={onClueFound} 
                             onInteraction={onInteraction}
                             interactedHotspots={interactedHotspots}
                             selectedClue={selectedClue}
@@ -772,13 +777,13 @@
                         />
                     )}
                 </div>
-
+                
                 <div className="text-center mt-8">
                     <button onClick={onComplete} className="bg-[#333] text-white py-2 px-12 font-bold hover:bg-black transition-all duration-200 font-mono transform active:scale-95 shadow-lg">
                         &gt;&gt; ПЕРЕЙТИ К ДОПРОСУ
                     </button>
                 </div>
-                <ClueInventory
+                <ClueInventory 
                     isOpen={inventoryOpen}
                     onClose={() => setInventoryOpen(false)}
                     foundClues={foundClues}
@@ -789,6 +794,7 @@
         );
     };
 
+    /* InterrogationSection */
     const InterrogationSection = ({ foundClues, onComplete, onNoteAdded }) => {
         const [activeSuspect, setActiveSuspect] = useState(SuspectId.Grigory);
         const [dialogueHistory, setDialogueHistory] = useState({
@@ -846,14 +852,14 @@
                             {dialogues.map(dialogue => {
                                 const isAvailable = !dialogue.requiresClue || foundClues.has(dialogue.requiresClue);
                                 const isAnswered = answeredQuestions.has(dialogue.question);
-
+                                
                                 return (
                                     <button
                                         key={dialogue.id}
                                         onClick={() => handleQuestion(dialogue.question, dialogue.answer, dialogue.conclusion)}
                                         disabled={!isAvailable || isAnswered}
                                         className={`w-full text-left p-2 border transition-all duration-200 transform active:scale-95 ${
-                                            isAnswered ? 'bg-gray-300 text-gray-500 cursor-not-allowed' :
+                                            isAnswered ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 
                                             isAvailable ? 'bg-white hover:bg-gray-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                         }`}
                                         title={!isAvailable ? 'Требуется улика' : ''}
@@ -876,6 +882,7 @@
         );
     };
 
+    /* DeductionSection */
     const DeductionSection = ({ onComplete, notebookEntries }) => {
         const [culprit, setCulprit] = useState('');
         const [method, setMethod] = useState('');
@@ -890,7 +897,7 @@
             <section id="deduction">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-bold font-mono">ДЕДУКЦИЯ</h2>
-                    <button
+                    <button 
                         onClick={() => setIsNotebookOpen(true)}
                         className="bg-[#f0e6d2] border-2 border-black px-4 py-2 font-bold font-mono hover:bg-[#e6dfcc] transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
                     >
@@ -899,7 +906,7 @@
                 </div>
 
                 <p className="mb-6">Проанализировав улики и показания, вы готовы вынести окончательный вердикт. Выберите виновного, способ утечки и мотив преступления.</p>
-
+                
                 <div className="bg-white/40 p-6 border border-gray-400 mb-8">
                     <div className="grid grid-cols-1 gap-6">
                         <div>
@@ -933,8 +940,8 @@
                 </div>
 
                 <div className="text-center">
-                    <button
-                        onClick={handleSubmit}
+                    <button 
+                        onClick={handleSubmit} 
                         disabled={!culprit || !method || !motive}
                         className="bg-[#B83A2D] text-white py-4 px-16 font-bold text-xl hover:bg-[#9c3025] transition-all duration-200 font-mono transform active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-xl border-4 border-[#8b0000]"
                     >
@@ -961,6 +968,7 @@
         );
     };
 
+    /* EndScreen */
     const EndScreen = ({ rank, message, onRestart }) => {
         return (
             <section id="end-screen" className="text-center pb-8 animate-fade-in">
@@ -976,29 +984,28 @@
                     </button>
                 </div>
 
-                {/* Author Section */}
                 <div className="border-t-4 border-double border-gray-400 pt-10 mt-10">
                     <h2 className="text-xl font-bold mb-8 font-mono text-[#333] uppercase tracking-widest">Автор проекта</h2>
-
+                    
                     <div className="max-w-sm mx-auto group bg-white p-4 border border-gray-500/20 transition-shadow duration-300">
                         <div className="w-full h-[400px] mb-4 border-2 border-black overflow-hidden bg-gray-200 relative">
-                            <img
-                                src="https://i.ibb.co/YF9mrYKW/photo-2025-12-24-22-59-20.jpg"
-                                alt="Оля Ковальчук"
-                                className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                            <img 
+                                src="https://i.ibb.co/YF9mrYKW/photo-2025-12-24-22-59-20.jpg" 
+                                alt="Оля Ковальчук" 
+                                className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105" 
                             />
                         </div>
-
+                        
                         <h3 className="font-bold text-lg font-mono text-[#B83A2D] mb-1">E-LEARNING DEVELOPER</h3>
                         <p className="font-bold text-xl mb-3 font-mono">Оля Ковальчук</p>
-
+                        
                         <p className="text-sm text-left mb-6 font-mono text-gray-700 leading-relaxed border-t border-dashed border-gray-300 pt-3">
                             Создаю интерактивные форматы, которые вовлекают. Объединяю сторителлинг и практику, чтобы обучение было не только полезным, но и захватывающим.
                         </p>
-
-                        <a
-                            href="https://t.me/okcrazyart"
-                            target="_blank"
+                        
+                        <a 
+                            href="https://t.me/okcrazyart" 
+                            target="_blank" 
                             rel="noopener noreferrer"
                             className="block w-full bg-[#B83A2D] text-white py-3 font-bold hover:bg-[#9c3025] transition-all duration-200 font-mono transform active:scale-95 shadow-md flex items-center justify-center gap-2"
                         >
@@ -1010,6 +1017,7 @@
         );
     };
 
+    /* ---------------- APP ---------------- */
     const App = () => {
         const [isLoading, setIsLoading] = useState(true);
         const [gameStage, setGameStage] = useState(GameStage.Intro);
@@ -1056,7 +1064,7 @@
             setNotebookEntries([]);
             setFinalScore(null);
         }, []);
-
+        
         const advanceStage = useCallback((stage) => {
             setGameStage(stage);
         }, []);
@@ -1109,49 +1117,49 @@
         const handleNoteAdded = (note) => {
             setNotebookEntries(prev => [...prev, note]);
         };
-
+        
         const handleDeduction = (culprit, method, motive) => {
             stopTimer();
             setGameStage(GameStage.End);
 
             const isCulpritCorrect = culprit === 'elena';
-            const isMethodCorrect = method === 'phishing';
+            const isMethodCorrect = method === 'phishing'; 
             const isMotiveCorrect = motive === 'debt';
-
+            
             const cluesCount = foundClues.size;
             const totalClues = Object.keys(CLUE_DESCRIPTIONS).length;
 
             if (isCulpritCorrect && isMethodCorrect && isMotiveCorrect) {
                 if (cluesCount >= totalClues - 4) {
-                     setFinalScore({
-                         rank: 'ЛЕГЕНДА СЫСКА',
-                         message: 'Идеальное расследование! Вы нашли все улики, восстановили картину преступления и спасли компанию. Елена арестована, Григория отправили на курсы ИБ, Михаила наградили грамотой. Вам выписали тройную премию.'
+                     setFinalScore({ 
+                         rank: 'ЛЕГЕНДА СЫСКА', 
+                         message: 'Идеальное расследование! Вы нашли все улики, восстановили картину преступления и спасли компанию. Елена арестована, Григория отправили на курсы ИБ, Михаила наградили грамотой. Вам выписали тройную премию.' 
                      });
                 } else {
-                    setFinalScore({
-                        rank: 'ЧИСТАЯ ИНТУИЦИЯ',
-                        message: 'Вы абсолютно верно назвали виновного и мотив! Однако, вы собрали не все доказательства. Это победа, но в суде придется попотеть, доказывая вину Елены только на основе ваших догадок. Вам повезло.'
+                    setFinalScore({ 
+                        rank: 'ЧИСТАЯ ИНТУИЦИЯ', 
+                        message: 'Вы абсолютно верно назвали виновного и мотив! Однако, вы собрали не все доказательства. Это победа, но в суде придется попотеть, доказывая вину Елены только на основе ваших догадок. Вам повезло.' 
                     });
                 }
             } else if (isCulpritCorrect && (!isMethodCorrect || !isMotiveCorrect)) {
-                 setFinalScore({
-                     rank: 'СЛЕДОВАТЕЛЬ-НОВИЧОК',
-                     message: 'Вы поймали нужного человека (Елена), но не смогли полностью доказать схему преступления. Адвокаты могут развалить дело в суде. Директор смотрит на вас с сомнением.'
+                 setFinalScore({ 
+                     rank: 'СЛЕДОВАТЕЛЬ-НОВИЧОК', 
+                     message: 'Вы поймали нужного человека (Елену), но не смогли полностью доказать схему преступления. Адвокаты могут развалить дело в суде. Директор смотрит на вас с сомнением.' 
                  });
             } else if (culprit === 'grigory') {
-                setFinalScore({
-                    rank: 'ОШИБКА СЛЕДСТВИЯ',
-                    message: 'Вы обвинили Григория. Да, он нарушал правила (майнинг), но он не сливал базу. Настоящий преступник (Елена) осталась на свободе и подставила сисадмина. Вы уволены за некомпетентность.'
+                setFinalScore({ 
+                    rank: 'ОШИБКА СЛЕДСТВИЯ', 
+                    message: 'Вы обвинили Григория. Да, он нарушал правила (майнинг), но он не сливал базу. Настоящий преступник (Елена) осталась на свободе и подставила сисадмина. Вы уволены за некомпетентность.' 
                 });
             } else if (culprit === 'mikhail') {
-                 setFinalScore({
-                    rank: 'ПОЗОР',
-                    message: 'Вы обвинили старого бухгалтера. Михаил перепутал файлы по глупости, но злого умысла не имел. Коллектив вас ненавидит за травлю старика. Настоящий вор сбежал с деньгами.'
+                 setFinalScore({ 
+                    rank: 'ПОЗОР', 
+                    message: 'Вы обвинили старого бухгалтера. Михаил перепутал файлы по глупости, но злого умысла не имел. Коллектив вас ненавидит за травлю старика. Настоящий вор сбежал с деньгами.' 
                 });
             } else {
-                 setFinalScore({
-                    rank: 'ПРОВАЛ',
-                    message: 'Ваша версия рассыпалась. Вы обвинили невиновных, не поняли мотивов. Директор в ярости выставил вас за дверь.'
+                 setFinalScore({ 
+                    rank: 'ПРОВАЛ', 
+                    message: 'Ваша версия рассыпалась. Вы обвинили невиновных, не поняли мотивов. Директор в ярости выставил вас за дверь.' 
                 });
             }
         };
@@ -1185,17 +1193,17 @@
 
                     <main className="space-y-12">
                         {gameStage >= GameStage.Intro && renderSection(GameStage.Intro, <IntroSection onStart={startGame} />)}
-
+                        
                         {gameStage >= GameStage.Dossier && (
                             <div className={`transition-all duration-700 ease-in-out ${gameStage > GameStage.Intro ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
                                  {renderSection(GameStage.Dossier, <DossierSection onComplete={() => advanceStage(GameStage.Search)} />)}
                             </div>
                         )}
-
+                        
                         {gameStage >= GameStage.Search && (
                             <div className={`transition-all duration-700 ease-in-out ${gameStage > GameStage.Dossier ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
-                                 {renderSection(GameStage.Search,
-                                    <SearchSection
+                                 {renderSection(GameStage.Search, 
+                                    <SearchSection 
                                         timeLeft={timeLeft}
                                         foundClues={Array.from(foundClues)}
                                         foundCluesCount={foundClues.size}
@@ -1210,8 +1218,8 @@
 
                         {gameStage >= GameStage.Interrogation && (
                              <div className={`transition-all duration-700 ease-in-out ${gameStage > GameStage.Search ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
-                                {renderSection(GameStage.Interrogation,
-                                    <InterrogationSection
+                                {renderSection(GameStage.Interrogation, 
+                                    <InterrogationSection 
                                         foundClues={foundClues}
                                         onNoteAdded={handleNoteAdded}
                                         onComplete={() => advanceStage(GameStage.Deduction)}
@@ -1228,7 +1236,7 @@
 
                         {gameStage === GameStage.End && finalScore && (
                             <div className={`transition-all duration-700 ease-in-out ${gameStage === GameStage.End ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
-                                 <EndScreen
+                                 <EndScreen 
                                     rank={finalScore.rank}
                                     message={finalScore.message}
                                     onRestart={startGame}
@@ -1241,11 +1249,13 @@
         );
     };
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+    /* ---------------- INDEX ---------------- */
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
     root.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
+        <React.StrictMode>
+            <App />
+        </React.StrictMode>
     );
     </script>
   </body>
