@@ -8,12 +8,12 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- React & ReactDOM (UMD) -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- React & ReactDOM (Cloudflare CDN for better reliability) -->
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     
-    <!-- Babel for JSX transformation -->
-    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Babel (Standalone) -->
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,16 +32,11 @@
         color: #1a1a1a;
         overflow-x: hidden;
         margin: 0;
+        -webkit-tap-highlight-color: transparent;
       }
       
-      /* Override Tailwind defaults to ensure consistency */
-      .font-mono {
-        font-family: var(--font-main) !important;
-      }
-
-      .font-sans {
-        font-family: var(--font-header) !important;
-      }
+      .font-mono { font-family: var(--font-main) !important; }
+      .font-sans { font-family: var(--font-header) !important; }
       
       h1, h2, h3, button {
         font-family: var(--font-header);
@@ -49,13 +44,13 @@
         letter-spacing: 0.05em;
       }
       
-      /* Retro Cursors */
       .hotspot {
         cursor: help;
-        border: 1px solid rgba(255, 0, 0, 0.0); /* Hidden hit area hint */
+        border: 1px solid rgba(255, 0, 0, 0.0);
         transition: border 0.2s;
+        touch-action: manipulation;
       }
-      .hotspot:hover {
+      .hotspot:hover, .hotspot:active {
          border: 1px solid rgba(255, 0, 0, 0.3);
          background-color: rgba(255, 255, 0, 0.05);
       }
@@ -64,7 +59,6 @@
         cursor: copy;
       }
 
-      /* Animations */
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -73,7 +67,6 @@
         animation: fadeIn 0.6s ease-out;
       }
       
-      /* High Contrast Paper */
       .paper-texture {
          background-color: #f7f1e3;
          background-image: linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);
@@ -90,17 +83,13 @@
       }
 
       /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #e0d8c3;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #8b0000;
-      }
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #e0d8c3; }
+      ::-webkit-scrollbar-thumb { background: #8b0000; }
 
-      /* Error Container */
+      /* Mobile friendly */
+      button { touch-action: manipulation; }
+      
       #error-boundary {
         display: none;
         position: fixed;
@@ -108,6 +97,7 @@
         background: #000; color: #ff0000;
         z-index: 9999; padding: 20px;
         white-space: pre-wrap; font-family: monospace;
+        overflow: auto;
       }
     </style>
   <script type="importmap">
@@ -129,21 +119,28 @@
             var container = document.getElementById('error-boundary');
             if (container) {
                 container.style.display = 'block';
-                container.innerHTML = '<h1>CRITICAL ERROR</h1><p>' + msg + '</p><p>Line: ' + lineNo + '</p>';
+                container.innerHTML += '<h3>CRITICAL ERROR</h3><p>' + msg + '</p><p>Line: ' + lineNo + '</p><hr/>';
             }
             return false;
         };
+        // Safety check for React
+        window.onload = function() {
+            if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+                var container = document.getElementById('error-boundary');
+                container.style.display = 'block';
+                container.innerHTML += '<h3>DEPENDENCY ERROR</h3><p>React failed to load. Please check your internet connection.</p>';
+            }
+        };
     </script>
 
-    <script type="text/babel" data-presets="react,typescript">
-    /*******************************************************
-     * SINGLE FILE APPLICATION BUILD
-     * Все компоненты объединены для работы без сборщика
-     *******************************************************/
-
+    <!-- Removed 'typescript' preset to avoid mobile parsing issues -->
+    <script type="text/babel" data-presets="react">
+    
+    // --- SAFE GLOBAL SCOPE START ---
+    
     const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
-    /* ---------------- types.ts (Converted to Const Objects) ---------------- */
+    /* CONSTANTS & DATA */
     
     const GameStage = {
         Intro: 0,
@@ -161,11 +158,8 @@
     };
 
     const ClueId = {
-        // Physical Items
         FloppyDisk: 'item_floppy',
         FlashDrive: 'item_flash',
-        
-        // Intel
         MinerRDP: 'miner_rdp',
         PasswordSticker: 'password_sticker',
         ThreateningSMS: 'threatening_sms',
@@ -179,7 +173,6 @@
         ElenaFlipPhone: 'elena_phone_drafts',
     };
 
-    /* ---------------- constants.ts ---------------- */
     const TOTAL_TIME = 45 * 60; 
 
     const SUSPECTS = [
@@ -381,9 +374,8 @@
         ]}
     ];
 
-    /* ---------------- COMPONENTS ---------------- */
+    /* COMPONENTS */
 
-    /* Modal */
     const Modal = ({ isOpen, onClose, title, children }) => {
         if (!isOpen) return null;
 
@@ -400,7 +392,7 @@
                         <h3 className="text-lg font-bold font-mono">{title}</h3>
                         <button onClick={onClose} className="text-2xl font-bold hover:text-[#B83A2D] transition-transform transform active:scale-90">&times;</button>
                     </div>
-                    <div>
+                    <div className="overflow-y-auto max-h-[60vh]">
                         {children}
                     </div>
                 </div>
@@ -408,7 +400,6 @@
         );
     };
 
-    /* LoadingScreen */
     const LoadingScreen = () => {
         return (
             <div className="min-h-screen bg-[#f7f1e3] flex items-center justify-center p-4">
@@ -441,7 +432,6 @@
         );
     };
 
-    /* IntroSection */
     const IntroSection = ({ onStart }) => {
         const [rulesModalOpen, setRulesModalOpen] = useState(false);
         const [briefingModalOpen, setBriefingModalOpen] = useState(false);
@@ -520,7 +510,6 @@
         );
     };
 
-    /* DossierSection */
     const DossierSection = ({ onComplete }) => {
         return (
             <section id="dossier" className="animate-fade-in">
@@ -550,7 +539,6 @@
         );
     };
 
-    /* ClueInventory */
     const ClueInventory = ({ isOpen, onClose, foundClues, onSelectClue, selectedClue }) => { 
         const handleSelect = (clueId) => { 
             if (CLUE_DESCRIPTIONS[clueId].isItem) {
@@ -597,7 +585,6 @@
         ); 
     }; 
 
-    /* DeskComponent */
     const DeskComponent = ({ desk, onClueFound, onInteraction, interactedHotspots, selectedClue, setSelectedClue }) => {
         const [selectedHotspot, setSelectedHotspot] = useState(null);
         const [interactionResult, setInteractionResult] = useState(null);
@@ -705,7 +692,6 @@
         );
     };
 
-    /* SearchSection */
     const SearchSection = ({ timeLeft, foundClues, foundCluesCount, onClueFound, onInteraction, interactedHotspots, onComplete }) => {
         const [activeDesk, setActiveDesk] = useState(SuspectId.Grigory);
         const [inventoryOpen, setInventoryOpen] = useState(false);
@@ -794,7 +780,6 @@
         );
     };
 
-    /* InterrogationSection */
     const InterrogationSection = ({ foundClues, onComplete, onNoteAdded }) => {
         const [activeSuspect, setActiveSuspect] = useState(SuspectId.Grigory);
         const [dialogueHistory, setDialogueHistory] = useState({
@@ -882,7 +867,6 @@
         );
     };
 
-    /* DeductionSection */
     const DeductionSection = ({ onComplete, notebookEntries }) => {
         const [culprit, setCulprit] = useState('');
         const [method, setMethod] = useState('');
@@ -949,6 +933,7 @@
                     </button>
                 </div>
 
+                {/* Notebook Modal */}
                 <Modal isOpen={isNotebookOpen} onClose={() => setIsNotebookOpen(false)} title="БЛОКНОТ ДЕТЕКТИВА">
                      <div className="bg-yellow-50 p-4 border border-gray-200 min-h-[300px] max-h-[60vh] overflow-y-auto font-mono text-sm leading-relaxed">
                         {notebookEntries.length === 0 ? (
@@ -968,7 +953,6 @@
         );
     };
 
-    /* EndScreen */
     const EndScreen = ({ rank, message, onRestart }) => {
         return (
             <section id="end-screen" className="text-center pb-8 animate-fade-in">
@@ -1017,7 +1001,8 @@
         );
     };
 
-    /* ---------------- APP ---------------- */
+    /* APP COMPONENT */
+    
     const App = () => {
         const [isLoading, setIsLoading] = useState(true);
         const [gameStage, setGameStage] = useState(GameStage.Intro);
@@ -1249,7 +1234,7 @@
         );
     };
 
-    /* ---------------- INDEX ---------------- */
+    /* RENDER */
     const rootElement = document.getElementById('root');
     const root = ReactDOM.createRoot(rootElement);
     root.render(
