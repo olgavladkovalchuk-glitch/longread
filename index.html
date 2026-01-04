@@ -8,7 +8,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- React & ReactDOM (Cloudflare CDN) -->
+    <!-- React & ReactDOM (Cloudflare CDN - UMD version for max compatibility) -->
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     
@@ -127,7 +127,7 @@
         };
     </script>
 
-    <!-- Main Application Script -->
+    <!-- Main Application Script - Bundled for Mobile Compatibility -->
     <script type="text/babel" data-presets="react">
     
     // Safety check for React globals
@@ -137,7 +137,7 @@
 
     const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
-    /* ================= TYPES (Converted to Consts) ================= */
+    /* ================= TYPES (Converted to JS Objects) ================= */
     
     const GameStage = {
         Intro: 0,
@@ -268,7 +268,7 @@
                 }},
                 { id: 'elena_flash', top: '75%', left: '90%', width: '8%', height: '8%', description: 'Флешка со стразами.', interactions: {
                     quick: { text: 'Забрать (1 мин)', time: 60, result: 'Вы взяли флешку. Выглядит безобидно, но интуиция кричит об обратном.', clue: ClueId.FlashDrive },
-                    deep: { text: 'Рассмотреть (1 мин)', time: 60, result: 'Надпись "Для документов". Слишком банально.' },
+                    deep: { text: 'Рассмотреть (1 мин)', time: 120, result: 'Надпись "Для документов". Слишком банально.' },
                 }},
                 { id: 'elena_notepad', top: '30%', left: '80%', width: '15%', height: '25%', description: 'Ежедневник в коже.', interactions: {
                     quick: { text: 'Читать (1 мин)', time: 60, result: 'Запись на 18:00: "Маникюр". На 19:00: "Конец света".' },
@@ -1110,25 +1110,44 @@
             const isMethodCorrect = method === 'phishing'; 
             const isMotiveCorrect = motive === 'debt';
             
-            const cluesCount = foundClues.size;
-            const totalClues = Object.keys(CLUE_DESCRIPTIONS).length;
+            // Strict evidence logic for Elena
+            // 1. Motive: Debt Letter
+            const hasMotiveEvidence = foundClues.has(ClueId.DebtLetter);
+            // 2. The Plan: Notepad Entry
+            const hasPlanEvidence = foundClues.has(ClueId.NotepadEntry);
+            // 3. The Weapon: Trojan Flash Drive (MUST be checked on computer, not just picked up)
+            const hasWeaponEvidence = foundClues.has(ClueId.TrojanFlashDrive);
+            // 4. Intent/Blackmail: Phone Drafts OR Threatening SMS
+            const hasIntentEvidence = foundClues.has(ClueId.ElenaFlipPhone) || foundClues.has(ClueId.ThreateningSMS);
+            
+            // Count how many STRONG pieces of evidence were found
+            let strongEvidenceCount = 0;
+            if (hasMotiveEvidence) strongEvidenceCount++;
+            if (hasPlanEvidence) strongEvidenceCount++;
+            if (hasWeaponEvidence) strongEvidenceCount++;
+            if (hasIntentEvidence) strongEvidenceCount++;
 
             if (isCulpritCorrect && isMethodCorrect && isMotiveCorrect) {
-                if (cluesCount >= totalClues - 4) {
+                if (strongEvidenceCount === 4) {
                      setFinalScore({ 
                          rank: 'ЛЕГЕНДА СЫСКА', 
-                         message: 'Идеальное расследование! Вы нашли все улики, восстановили картину преступления и спасли компанию. Елена арестована, Григория отправили на курсы ИБ, Михаила наградили грамотой. Вам выписали тройную премию.' 
+                         message: 'Идеальное расследование! Вы нашли все ключевые улики: план в блокноте, письмо от коллекторов, черновики с угрозами и подтвердили наличие трояна на флешке. Вина Елены доказана на 100%, адвокаты бессильны. Вам выписали тройную премию.' 
                      });
-                } else {
+                } else if (strongEvidenceCount >= 2) {
                     setFinalScore({ 
-                        rank: 'ЧИСТАЯ ИНТУИЦИЯ', 
-                        message: 'Вы абсолютно верно назвали виновного и мотив! Однако, вы собрали не все доказательства. Это победа, но в суде придется попотеть, доказывая вину Елены только на основе ваших догадок. Вам повезло.' 
+                        rank: 'ОПЫТНЫЙ СЛЕДОВАТЕЛЬ', 
+                        message: 'Отличная работа. Вы верно определили преступника и мотив. У вас есть пара железных улик, но картина преступления восстановлена не полностью (возможно, вы не проверили флешку или не нашли план). Тем не менее, Елена арестована.' 
                     });
+                } else {
+                     setFinalScore({ 
+                         rank: 'ЧИСТАЯ ИНТУИЦИЯ', 
+                         message: 'Вы угадали! Елена действительно виновна, и мотив с долгами верный. Но у вас на руках почти нет твердых улик. В суде будет сложно доказать её вину без блокнота или данных с флешки. Директор рад, что крыса найдена, но просит впредь искать доказательства, а не гадать.' 
+                     });
                 }
             } else if (isCulpritCorrect && (!isMethodCorrect || !isMotiveCorrect)) {
                  setFinalScore({ 
                      rank: 'СЛЕДОВАТЕЛЬ-НОВИЧОК', 
-                     message: 'Вы поймали нужного человека (Елену), но не смогли полностью доказать схему преступления. Адвокаты могут развалить дело в суде. Директор смотрит на вас с сомнением.' 
+                     message: 'Вы поймали нужного человека (Елену), но не смогли точно понять схему или мотив преступления. Адвокаты могут развалить дело в суде, так как вы путаетесь в показаниях. Директор смотрит на вас с сомнением.' 
                  });
             } else if (culprit === 'grigory') {
                 setFinalScore({ 
